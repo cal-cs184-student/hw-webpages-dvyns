@@ -32,11 +32,11 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp26">cs184.eecs.berkeley.edu/sp26</a>
 		
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp26">cs184.eecs.berkeley.edu/sp26</a>
 
 		<figure>
 			<img src="lion.jpg" alt="Lion" style="width:50%"/>
@@ -51,29 +51,33 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		In <code class="language-plaintext highlighter-rouge">src/rasterizer.cpp</code>, we rasterize each triangle by first computing the smallest axis-aligned bounding box that contains all three vertices of a given triangle. 
+		Then we clamp that box to the framebuffer and iterate through each sample point inside that box. 
+		For each sample, we evaluate the three edge functions (signed cross products against the triangle's directed edges). 
+		If the sample has a consistent sign for all three edge tests, it is inside or on the boundary of the triangle, so we fill that sample with the triangle color; otherwise we skip it. 
+		
+		<p>This is no worse than checking each sample in the bounding box because that is exactly what we are doing.</p>
 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="size1.png" width="300px"/>
+				  <figcaption>Supersample rate 1 per pixel.</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="size4.png" width="300px"/>
+				  <figcaption>Supersample rate 4 per pixel.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="size9.png" width="300px"/>
+				  <figcaption>Supersample rate 9 per pixel.</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="size16.png" width="300px"/>
+				  <figcaption>Supersample rate 16 per pixel.</figcaption>
 				</td>
 			  </tr>
 			</table>

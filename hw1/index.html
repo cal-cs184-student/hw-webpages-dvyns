@@ -94,7 +94,9 @@
 				I posed cubeman in a mid-stride running position. I rotated the torso slightly forward to simulate motion and rotated the legs in opposite directions to create a dynamic stride. The arms swing opposite to the legs to mimic natural running biomechanics.
 				I also adjusted limb proportions and used different colors to better visualize the hierarchical transforms and make the pose more expressive.
 			</p>
-			<img src="screenshot_2-19_11-57-10.png" alt="dancing img">
+			<figure>
+				<img src="screenshot_2-19_11-57-10.png" alt="dancing img" style="width: 80%"/>
+			</figure>
 
 		
 		<h2>Task 4: Barycentric coordinates</h2>
@@ -124,9 +126,9 @@
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
 			<p>
 				Pixel sampling is the process of determining what color a pixel on screen should be by looking up a corresponding point in a texture image.
-				When we rasterize a textured triangle, each vertex has both a screen-space position (x, y) and a texture-space coordinate (u, v) in the range [0, 1]. 
-				For any pixel inside the triangle, we compute its barycentric coordinates (α, β, γ) and use them to interpolate the texture coordinates: v = α·v_A + β·v_B + γ·v_C, and similarly for u. 
-				We then scale u and v by the texture's width and height to get a continuous texel coordinate, and sample a color from the texture at that location.
+				When we rasterize a textured triangle, each vertex has both a screen-space position \((x, y)\) and a texture-space coordinate \((u, v)\) in the range [0, 1]. 
+				For any pixel inside the triangle, we compute its barycentric coordinates \(\alpha, \beta, \gamma\) and use them to interpolate the texture coordinates: \(v=\alpha v_A + \beta v_B + \gamma v_C\), and similarly for \(u\). 
+				We then scale \(u\) and \(v\) by the texture's width and height to get a continuous texel coordinate, and sample a color from the texture at that location.
 			</p>
 			<p>
 				Nearest neighbor sampling rounds the continuous texel coordinate to the nearest integer texel and returns that texel's color. It's fast but can look blocky or aliased, especially when zoomed in, because it doesn't consider surrounding texel information.
@@ -137,22 +139,36 @@
 			</p>
 
 			<h2>nearest sampling </h2>
-
-				<div>
-					<img src="screenshot_2-20_22-30-58.png" alt="nearest sampling img">
-					<img src="screenshot_2-20_22-31-21.png" alt="Bilinear sampling">
-				</div>
-
-				<div>
-					<img src="screenshot_2-20_22-31-30.png" alt="nearest sampling img">
-					<img src="screenshot_2-20_22-31-8.png" alt="Bilinear sampling">
-				</div>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="screenshot_2-20_22-30-58.png" alt="nearest sampling img" width="500px">
+				  <figcaption>Nearest Sampling.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="screenshot_2-20_22-31-21.png" alt="bilinear sampling img" width="500px">
+				  <figcaption>Bilinear Sampling.</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="screenshot_2-20_22-31-30.png" alt="nearest sampling" width="500px">
+				  <figcaption>Nearest Sampling + 16 per pixel supersampling.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="screenshot_2-20_22-31-8.png" alt="supersample 16 img" width="500px">
+				  <figcaption>Bilinear Sampling + 16 per pixel supersampling.</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 				<p>
-					The relative difference between nearest neighbor and bilinear sampling in the picture above is thst the dotted line in the picture seems a bit blures in the bilinear sampling  while the nearest sampling looks sharp, clear and blocky.
+					The relative difference between nearest neighbor and bilinear sampling in the picture above is that the dotted line in the picture seems a bit blurrier in the bilinear sampling  while the nearest sampling looks sharp, clear and blocky.
 				</p>
 				<p>
-					when there will be a big difference between nearest neighbor and bilinear sampling is when the texture is viewed at a steep angle or from a distance, causing it to be minified. In these cases, nearest neighbor can produce severe aliasing artifacts, while bilinear sampling will still provide a smoother appearance by blending texels together.
+					When there will be a big difference between nearest neighbor and bilinear sampling is when the texture is viewed at a steep angle or from a distance, causing it to be minified. In these cases, nearest neighbor can produce severe aliasing artifacts, while bilinear sampling will still provide a smoother appearance by blending texels together.
 				</p>
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 		Level sampling is an antialising technique that samples from downsampled versions of our texture stored in a mipmap at various

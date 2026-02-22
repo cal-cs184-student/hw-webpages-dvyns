@@ -69,18 +69,24 @@
 		
 		<h2>Task 2: Antialiasing by Supersampling</h2>
 			
-		<p>The supersample buffer is sample_buffer, <code >a std::vector<Color> </code>resized to width * height * sample_rate. Each pixel (x, y) owns a contiguous block of sample_rate entries, indexed as: 
-			<code>
+		<p>The supersample buffer is sample_buffer, a <code >std::vector<Color></code> resized to <code>width * height * sample_rate</code>. Each pixel \((x, y)\) owns a contiguous block of <code>sample_rate</code> entries, indexed as: 
+			<p style="text-align: center;"><code>
 			sample_buffer[(y * width + x) * sample_rate + (j * sq_sample + i)]
-		  </code>
+		  </code></p>
 		  <p>
 			where <code>i, j ∈ [0, sq_sample]</code> and 
 			<code>sq_sample = sqrt(sample_rate)</code>.
 		  </p>		</p>
 		<p>Pipeline modifications:
-			set_sample_rate() / set_framebuffer_target() — both resize sample_buffer to width * height * sample_rate, ensuring the buffer always matches the current window size and sampling rate.
-			clear_buffers(): fills both rgb_framebuffer_target and sample_buffer with white before each frame.
-			rasterize_triangle(): for each pixel in the bounding box, iterates over a sq_sample × sq_sample grid of sub-sample locations. Each sub-sample offset is placed at the center of its sub-pixel cell: 
+			<p style="padding-left: 30px">
+				<code>set_sample_rate()</code> / <code>set_framebuffer_target()</code> — both resize sample_buffer to width * height * sample_rate, ensuring the buffer always matches the current window size and sampling rate.
+			</p>
+			<p style="padding-left: 30px">
+				<code>clear_buffers()</code>: fills both rgb_framebuffer_target and sample_buffer with white before each frame.
+			</p>
+			
+			<p style="padding-left: 30px">
+				<code>rasterize_triangle()</code>: for each pixel in the bounding box, iterates over a sq_sample × sq_sample grid of sub-sample locations. Each sub-sample offset is placed at the center of its sub-pixel cell: 
 			<p style="text-align: center;">
 				<code>
 				  float dx = (2.0f * i + 1) / (2.0f * sq_sample); <br>
@@ -88,11 +94,16 @@
 				</code>
 		</p>
 
-<p> Sub-samples passing the three edge tests are written into the sample_buffer. The winding-agnostic check (all ≥ 0) || (all ≤ 0) handles both CW and CCW triangles.
-	fill_pixel() — used by points and lines. Writes the same color to all sample_rate slots for the pixel, so averaging during resolve produces the correct solid color with no supersampling effect.
-	resolve_to_framebuffer() it averages all sample_rate Color entries for each pixel, multiplies by 1/sample_rate, then writes clamped 8-bit RGB values into rgb_framebuffer_target.
+	<p style="padding-left: 30px"> 
+		Sub-samples passing the three edge tests are written into the sample_buffer. We use a winding-agnostic check (all ≥ 0) || (all ≤ 0) that handles both CW and CCW triangles.
+	</p>
+	<p style="padding-left: 30px;">
+		<code>fill_pixel()</code> — used by points and lines. Writes the same color to all sample_rate slots for the pixel, so averaging during resolve produces the correct solid color with no supersampling effect.
+	</p>
+	<p style="padding-left: 30px;">
+	<code>resolve_to_framebuffer()</code> it averages all sample_rate Color entries for each pixel, multiplies by 1/sample_rate, then writes clamped 8-bit RGB values into rgb_framebuffer_target.
 </p>
-<b> Why Supersampling Is Useful</b>
+<h3> Why Supersampling Is Useful</h3>
 <p>
 	
 	Sampling multiple locations within each pixel and averaging the results creates smoother edges and more accurately represents pixels that are only partially covered by an object.
@@ -121,7 +132,7 @@
 	</table>
 </div>
 
-		<h1>Explained result of the images</h1>
+		<h3>Results from the images:</h3>
 		<p>
 			<p>	At sample rate 1, the skinny triangle corner shows dramatic aliasing the entire pixels are skipped because the single center sample misses the very narrow geometry, producing disconnected or missing pixels and harsh jagged edges.
 			</p>
@@ -137,8 +148,8 @@
 			</p>
 		<h2>Task 3: Transforms</h2>
 			<p>
-				I posed cubeman in a mid-stride running position. I rotated the torso slightly forward to simulate motion and rotated the legs in opposite directions to create a dynamic stride. The arms swing opposite to the legs to mimic natural running biomechanics.
-				I also adjusted limb proportions and used different colors to better visualize the hierarchical transforms and make the pose more expressive.
+				We posed cubeman in a mid-stride running position. We rotated the torso slightly forward to simulate motion and rotated the legs in opposite directions to create a dynamic stride. The arms swing opposite to the legs to mimic natural running biomechanics.
+				We also adjusted limb proportions and used different colors to better visualize the hierarchical transforms and make the pose more expressive.
 			</p>
 			<figure>
 				<img src="screenshot_2-19_11-57-10.png" alt="dancing img" style="width: 80%"/>
@@ -203,8 +214,6 @@
 			<p>
 				Bilinear sampling takes the four texels surrounding the continuous sample point and blends them using linear interpolation, first horizontally between the two left and two right texels, then vertically between the resulting two colors. This produces a much smoother result because the sampled color is a weighted average of its neighbors based on how close the sample point is to each.
 			</p>
-
-			<h2>nearest sampling </h2>
 			<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>

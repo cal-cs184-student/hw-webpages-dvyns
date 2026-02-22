@@ -50,8 +50,11 @@
 		<h2>Overview</h2>
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
-		<h2>Task 1: Drawing Single-Color Triangles</h2>
 		
+		<h2>Task 1: Drawing Single-Color Triangles</h2>
+		<figure>
+			<img src="task1.png" alt="Lion" style="float: right" width="200px"/>
+		</figure>
 		In <code class="language-plaintext highlighter-rouge">src/rasterizer.cpp</code>, we rasterize each triangle by first computing the smallest axis-aligned bounding box that contains all three vertices of a given triangle. 
 		Then we clamp that box to the framebuffer and iterate through each sample point inside that box. 
 		For each sample, we evaluate the three edge functions (signed cross products against the triangle's directed edges). 
@@ -59,32 +62,10 @@
 		
 		<p>This is no worse than checking each sample in the bounding box because that is exactly what we are doing.</p>
 
-		<p>Screenshots below. The effect of supersampling is most visible on the center and bottom right triangles.</p>
-
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="size1_new.png" width="500px"/>
-				  <figcaption>Supersample rate 1 per pixel.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="size4_new.png" width="500px"/>
-				  <figcaption>Supersample rate 4 per pixel.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="size9_new.png" width="500px"/>
-				  <figcaption>Supersample rate 9 per pixel.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="size16_new.png" width="500px"/>
-				  <figcaption>Supersample rate 16 per pixel.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
+		<p> We were unsure what qualified as an interesting part of the image so we just centered it. Centering the image gives
+			a good view of how our current method of rasterization effects aliasing with the different shapes of triangles.
+		</p>
+		
 		
 		<h2>Task 2: Antialiasing by Supersampling</h2>
 			
@@ -104,27 +85,28 @@ float dy = (2.0f * j + 1) / (2.0f * sq_sample);</p>
 <b> Why Supersampling Is Useful</b>
 <p>
 	
-	Supersampling is a valuable technique for reducing aliasing. Sampling multiple locations within each pixel and averaging the results creates smoother edges and more accurately represents pixels that are only partially covered by an object.
+	Sampling multiple locations within each pixel and averaging the results creates smoother edges and more accurately represents pixels that are only partially covered by an object.
 
 </p>
 <div style="display: flex; flex-direction: column; align-items: center;">
 	<table style="width: 100%; text-align: center; border-collapse: collapse;">
 	  <tr>
 		<td style="text-align: center;">
-		  <img src="size1_new.png" width="500px"/>
+		  <img src="size1_new.png" width="300px"/>
 		  <figcaption>Supersample rate 1 per pixel.</figcaption>
 		</td>
 		<td style="text-align: center;">
-		  <img src="size4_new.png" width="500px"/>
+		  <img src="size4_new.png" width="300px"/>
 		  <figcaption>Supersample rate 4 per pixel.</figcaption>
+		</td>
+		<td style="text-align: center;">
+		  <img src="size16_new.png" width="300px"/>
+		  <figcaption>Supersample rate 16 per pixel.</figcaption>
 		</td>
 	  </tr>
 	  <tr>
 		
-		<td style="text-align: center;">
-		  <img src="size16_new.png" width="500px"/>
-		  <figcaption>Supersample rate 16 per pixel.</figcaption>
-		</td>
+		
 	  </tr>
 	</table>
 </div>
@@ -226,7 +208,29 @@ float dy = (2.0f * j + 1) / (2.0f * sq_sample);</p>
 				</p>
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 		Level sampling is an antialising technique that samples from downsampled versions of our texture stored in a mipmap at various
-		 mipmap levels. It chooses a level based on how fast a change in pic
+		 mipmap levels. It chooses a level based on how fast the texture space position changes relative to changes in pixel space position.
+		 When this rate of change is high (e.g. <code>dudx</code> and <code>dudy</code> in <code>Texture::get_level</code> are large), 
+		 it samples from a lower resolution mipmap. This avoids aliasing artifacts that would occur if we sampled from a higher resolution 
+		 image since we would be well below its nyquist frequency.
+
+		 <p>
+			We implemented this in the <code>Texture::get_level</code>, <code>Texture::sample</code>, and <code>RasterizerImp::rasterize_textured_triangle</code> functions.
+		 </p>
+		 <p>
+			<code>RasterizerImp::rasterize_textured_triangle</code> implements the same basic supersampling algorithm used in Task 2 except,
+			for each sample point, we create and assign a <code>SampleParams</code> struct <code>sp</code> with barycentric 
+			interpolated positions in \(u,v\)-space for the sample positions \((x,y),(x+1,y)\) and \((x,y+1)\). 
+			The <code>sp</code> instance is also assigned a pixel method variable and a level method variable, then passed into
+			<code>Texture::sample</code>.
+		 </p>
+		 <p>
+			<code>Texture::sample</code> uses the pixel and level methods of <code>SampleParams</code> to determine how to sample the texture,
+			then provides function calls to the <code>Texture::sample_nearest</code> and <code>Texture::sample_bilinear</code> functions implemented in Task 5
+			at levels provided by a call to <code>Texture::get_level</code>.
+		 </p>
+		 <p>
+			
+		 </p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">

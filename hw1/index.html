@@ -88,56 +88,66 @@
 		
 		<h2>Task 2: Antialiasing by Supersampling</h2>
 			
-				<b>Algorithm and Data Structures </b>
- <p>The supersample buffer is sample_buffer, a std::vector<Color> resized to width * height * sample_rate. Each pixel (x, y) owns a contiguous block of sample_rate entries, indexed as: sample_buffer[(y * width + x) * sample_rate + (j * sq_sample + i)]
-	where i, j ∈ [0, sq_sample] and sq_sample = sqrt(sample_rate).</p>
-			<p>Pipeline modifications:
-set_sample_rate() / set_framebuffer_target() — both resize sample_buffer to width * height * sample_rate, ensuring the buffer always matches the current window size and sampling rate.
-clear_buffers() — fills both rgb_framebuffer_target and sample_buffer with white before each frame.
-rasterize_triangle() — for each pixel in the bounding box, iterates over a sq_sample × sq_sample grid of sub-sample locations. Each sub-sample offset is placed at the center of its sub-pixel cell: float dx = (2.0f * i + 1) / (2.0f * sq_sample);
-float dy = (2.0f * j + 1) / (2.0f * sq_sample);</p>
+		<p>The supersample buffer is sample_buffer, <code >a std::vector<Color> </code>resized to width * height * sample_rate. Each pixel (x, y) owns a contiguous block of sample_rate entries, indexed as: 
+			<code>
+			sample_buffer[(y * width + x) * sample_rate + (j * sq_sample + i)]
+		  </code>
+		  <p>
+			where <code>i, j ∈ [0, sq_sample]</code> and 
+			<code>sq_sample = sqrt(sample_rate)</code>.
+		  </p>		</p>
+		<p>Pipeline modifications:
+			set_sample_rate() / set_framebuffer_target() — both resize sample_buffer to width * height * sample_rate, ensuring the buffer always matches the current window size and sampling rate.
+			clear_buffers(): fills both rgb_framebuffer_target and sample_buffer with white before each frame.
+			rasterize_triangle(): for each pixel in the bounding box, iterates over a sq_sample × sq_sample grid of sub-sample locations. Each sub-sample offset is placed at the center of its sub-pixel cell: 
+			<p style="text-align: center;">
+				<code>
+				  float dx = (2.0f * i + 1) / (2.0f * sq_sample); <br>
+				  float dy = (2.0f * j + 1) / (2.0f * sq_sample);
+				</code>
+		</p>
 
-<p> Sub-samples passing the three edge tests are written into the sample_buffer. The winding-agnostic check (all ≥ 0) || (all ≤ 0) handles both CW and CCW triangles.
-	fill_pixel() — used by points and lines. Writes the same color to all sample_rate slots for the pixel, so averaging during resolve produces the correct solid color with no supersampling effect.
-	resolve_to_framebuffer() it averages all sample_rate Color entries for each pixel, multiplies by 1/sample_rate, then writes clamped 8-bit RGB values into rgb_framebuffer_target.
-</p>
-<b> Why Supersampling Is Useful</b>
-<p>
-	
-	Supersampling is a valuable technique for reducing aliasing. Sampling multiple locations within each pixel and averaging the results creates smoother edges and more accurately represents pixels that are only partially covered by an object.
+		<p> Sub-samples passing the three edge tests are written into the sample_buffer. The winding-agnostic check (all ≥ 0) || (all ≤ 0) handles both CW and CCW triangles.
+			fill_pixel(): used by points and lines. Writes the same color to all sample_rate slots for the pixel, so averaging during resolve produces the correct solid color with no supersampling effect.
+			resolve_to_framebuffer(): it averages all sample_rate Color entries for each pixel, multiplies by 1/sample_rate, then writes clamped 8-bit RGB values into rgb_framebuffer_target.
+		</p>
+		<b> Why Supersampling Is Useful</b>
+		<p>
+			
+			Supersampling is a valuable technique for reducing aliasing. Sampling multiple locations within each pixel and averaging the results creates smoother edges and more accurately represents pixels that are only partially covered by an object.
 
-</p>
-<div style="display: flex; flex-direction: column; align-items: center;">
-	<table style="width: 100%; text-align: center; border-collapse: collapse;">
-	  <tr>
-		<td style="text-align: center;">
-		  <img src="size1_new.png" width="500px"/>
-		  <figcaption>Supersample rate 1 per pixel.</figcaption>
-		</td>
-		<td style="text-align: center;">
-		  <img src="size4_new.png" width="500px"/>
-		  <figcaption>Supersample rate 4 per pixel.</figcaption>
-		</td>
-	  </tr>
-	  <tr>
-		
-		<td style="text-align: center;">
-		  <img src="size16_new.png" width="500px"/>
-		  <figcaption>Supersample rate 16 per pixel.</figcaption>
-		</td>
-	  </tr>
-	</table>
-</div>
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+				<img src="size1_new.png" width="500px"/>
+				<figcaption>Supersample rate 1 per pixel.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				<img src="size4_new.png" width="500px"/>
+				<figcaption>Supersample rate 4 per pixel.</figcaption>
+				</td>
+			</tr>
+			<tr>
+				
+				<td style="text-align: center;">
+				<img src="size16_new.png" width="500px"/>
+				<figcaption>Supersample rate 16 per pixel.</figcaption>
+				</td>
+			</tr>
+			</table>
+		</div>
 
-<h1>Explained result of the imagees</h1>
-<p>
-	<p>	At sample rate 1, the skinny triangle corner shows dramatic aliasing the entire pixels are skipped because the single center sample misses the very narrow geometry, producing disconnected or missing pixels and harsh jagged edges.
-	</p>
-	<p>At sample rate 4, the corner becomes noticeably smoother. Pixels that are only partially covered by the triangle receive a blended color (roughly 1/4, 2/4, or 3/4 intensity depending on how many of the 4 sub-samples fall inside), creating a soft gradient along the edge. The thin tip is now visibly continuous.
-	</p>
-	<p>At sample rate 16, the effect is even more pronounced. With 16 sub-samples, the coverage fraction for each edge pixel is estimated much more finely and smoother (in increments of 1/16 rather than 1/4), producing a smoother gradient and better preserving the thin tip geometry. The triangle corner appears nearly continuous and the staircase artifact is largely eliminated.
-	</p>
-</p>
+		<h1>Explained result of the imagees</h1>
+		<p>
+			<p>	At sample rate 1, the skinny triangle corner shows dramatic aliasing the entire pixels are skipped because the single center sample misses the very narrow geometry, producing disconnected or missing pixels and harsh jagged edges.
+			</p>
+			<p>At sample rate 4, the corner becomes noticeably smoother. Pixels that are only partially covered by the triangle receive a blended color (roughly 1/4, 2/4, or 3/4 intensity depending on how many of the 4 sub-samples fall inside), creating a soft gradient along the edge. The thin tip is now visibly continuous.
+			</p>
+			<p>At sample rate 16, the effect is even more pronounced. With 16 sub-samples, the coverage fraction for each edge pixel is estimated much more finely and smoother (in increments of 1/16 rather than 1/4), producing a smoother gradient and better preserving the thin tip geometry. The triangle corner appears nearly continuous and the staircase artifact is largely eliminated.
+			</p>
+		</p>
 
 
 
@@ -154,7 +164,7 @@ float dy = (2.0f * j + 1) / (2.0f * sq_sample);</p>
 
 		
 		<h2>Task 4: Barycentric coordinates</h2>
-		<p></p>Suppose you have a triangle with vertices \(A\equiv (x_A, y_A)\), \(B\equiv (x_B, y_B)\), and \(C\equiv (x_C, y_C)\) 
+		<p>Suppose you have a triangle with vertices \(A\equiv (x_A, y_A)\), \(B\equiv (x_B, y_B)\), and \(C\equiv (x_C, y_C)\) 
 		and for some point inside the triangle \(P\equiv (x_P, y_P)\), the barycentric coordinates of \(P\) are \((\alpha, \beta, \gamma)\).
 		Then \(\alpha\) is the proprtion of the area of the triangle \(ABC\) that is covered by the triangle \(PBC\), and similarly 
 		for \(\beta\) and \(\gamma\). Triangle \(PBC\) is necessarily inside triangle \(ABC\) by defintion. The triangles \(PBC\), \(APC\), and \(ABP\) 
@@ -178,12 +188,32 @@ float dy = (2.0f * j + 1) / (2.0f * sq_sample);</p>
 		</div>
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
-			<p>
-				Pixel sampling is the process of determining what color a pixel on screen should be by looking up a corresponding point in a texture image.
-				When we rasterize a textured triangle, each vertex has both a screen-space position \((x, y)\) and a texture-space coordinate \((u, v)\) in the range [0, 1]. 
-				For any pixel inside the triangle, we compute its barycentric coordinates \(\alpha, \beta, \gamma\) and use them to interpolate the texture coordinates: \(v=\alpha v_A + \beta v_B + \gamma v_C\), and similarly for \(u\). 
-				We then scale \(u\) and \(v\) by the texture's width and height to get a continuous texel coordinate, and sample a color from the texture at that location.
-			</p>
+		<p>
+			<strong>Pixel sampling</strong> is the process of determining the color of a pixel on the screen by looking up the corresponding point in a texture image.
+		  </p>
+		  
+		  <p>
+			When rasterizing a textured triangle, each vertex has both a screen-space position 
+			<span>(x, y)</span> and a texture-space coordinate 
+			<span>(u, v)</span> in the range <span>[0, 1]</span>.
+		  </p>
+		  
+		  <p>
+			For any pixel inside the triangle, we compute its barycentric coordinates 
+			<span>&alpha;, &beta;, &gamma;</span> and use them to interpolate the texture coordinates:
+		  </p>
+		  
+		  <p style="text-align: center;">
+			<em>
+			  v = &alpha;v<sub>A</sub> + &beta;v<sub>B</sub> + &gamma;v<sub>C</sub><br>
+			  u = &alpha;u<sub>A</sub> + &beta;u<sub>B</sub> + &gamma;u<sub>C</sub>
+			</em>
+		  </p>
+		  
+		  <p>
+			We then scale <span>u</span> and <span>v</span> by the texture’s width and height to obtain a
+			continuous texel coordinate, and sample the color from the texture at that location.
+		  </p>
 			<p>
 				Nearest neighbor sampling rounds the continuous texel coordinate to the nearest integer texel and returns that texel's color. It's fast but can look blocky or aliased, especially when zoomed in, because it doesn't consider surrounding texel information.
 

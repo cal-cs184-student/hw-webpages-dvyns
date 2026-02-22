@@ -28,28 +28,25 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 1 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Tunmise Akanle, David Smith</div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp26">cs184.eecs.berkeley.edu/sp26</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-dvyns/hw1/index.html">https://cal-cs184-student.github.io/hw-webpages-dvyns/hw1/index.html</a>
 		
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp26">cs184.eecs.berkeley.edu/sp26</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/hw1-rasterizer-any-name-works#">https://github.com/cal-cs184-student/hw1-rasterizer-any-name-works#/sp26</a>
 
-		<figure>
-			<img src="lion.jpg" alt="Lion" style="width:50%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
 
 		<!--
 		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
 		<h2>Overview</h2>
-		<p>We were able to build a 2D rasterizer that converts SVG geometry into screen pixels. Starting from basic point-in-triangle tests, we layered on supersampling for antialiasing, barycentric coordinates for color interpolation, and finally texture mapping with mipmapping and various sampling methods.</p>
-
+		<p>We modified a 2D rasterization pipeline that converts SVG geometry into screen pixels to implement triangle rasterization and geometric transforms. 
+			We started with a point-in-triangle tests over a bounding box for each triangle then we layered on supersampling for antialiasing,
+			 barycentric coordinates for color interpolation, and additional pixel sampling and level sampling methods to implement texture mapping.</p>
 		
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
 		<figure>

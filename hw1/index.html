@@ -121,7 +121,7 @@
 	</table>
 </div>
 
-		<h1>Explained result of the imagees</h1>
+		<h1>Explained result of the images</h1>
 		<p>
 			<p>	At sample rate 1, the skinny triangle corner shows dramatic aliasing the entire pixels are skipped because the single center sample misses the very narrow geometry, producing disconnected or missing pixels and harsh jagged edges.
 			</p>
@@ -146,11 +146,11 @@
 
 		
 		<h2>Task 4: Barycentric coordinates</h2>
-		<p>Suppose you have a triangle with vertices \(A\equiv (x_A, y_A)\), \(B\equiv (x_B, y_B)\), and \(C\equiv (x_C, y_C)\) 
-		and for some point inside the triangle \(P\equiv (x_P, y_P)\), the barycentric coordinates of \(P\) are \((\alpha, \beta, \gamma)\).
+		<p>Suppose you have a triangle with vertices \[A\equiv (x_A, y_A), B\equiv (x_B, y_B),\text{ and }C\equiv (x_C, y_C)\] 
+		and some point inside the triangle \(P\equiv (x_P, y_P)\). The barycentric coordinates of \(P\) are \((\alpha, \beta, \gamma)\).
 		Then \(\alpha\) is the proprtion of the area of the triangle \(ABC\) that is covered by the triangle \(PBC\), and similarly 
 		for \(\beta\) and \(\gamma\). Triangle \(PBC\) is necessarily inside triangle \(ABC\) by defintion. The triangles \(PBC\), \(APC\), and \(ABP\) 
-		clearly sum together to make up all of \(ABC\) as shown to below.</p>
+		clearly sum together to make up all of \(ABC\) since the lines from each vertice to \(P\) trisect \(ABC\). This is shown below.</p>
 		
 		<p>Screenshot from <code>svg/basic/test7.svg</code> is shown also below:</p>
 		<div style="clear: both"></div>
@@ -241,7 +241,7 @@
 		 mipmap levels. It chooses a level based on how fast the texture space position changes relative to changes in pixel space position.
 		 When this rate of change is high (e.g. <code>dudx</code> and <code>dudy</code> in <code>Texture::get_level</code> are large), 
 		 it samples from a lower resolution mipmap. This avoids aliasing artifacts that would occur if we sampled from a higher resolution 
-		 image since we would be well below its nyquist frequency.
+		 image since we would be well below its's nyquist frequency.
 
 		 <p>
 			We implemented this in the <code>Texture::get_level</code>, <code>Texture::sample</code>, and <code>RasterizerImp::rasterize_textured_triangle</code> functions.
@@ -259,7 +259,41 @@
 			at levels provided by a call to <code>Texture::get_level</code>.
 		 </p>
 		 <p>
-			
+			<code>Texture::get_level</code> returns the appropriate mipmap level for a given <code>SampleParams</code> instance. 
+			It takes the base two logarithm of the max of the magnitude of the vectors 
+			\[\left(\frac{du}{dx}\mathbf{\hat{u}}+\frac{dv}{dx}\mathbf{\hat{v}}\right)\text{ and }
+			\left(\frac{du}{dy}\mathbf{\hat{u}}+\frac{dv}{dy}\mathbf{\hat{v}}\right).\] 
+		 </p>
+		 <p>
+			For pixel sampling:
+			<p style="padding-left: 30px">
+				Nearest sampling is computationally the cheapest by far, but it has pretty terrible quality for most images. It does nothing to reduce aliasing.
+			</p>
+			<p style="padding-left: 30px">
+				Bilinear sampling reduces aliasing by doing linear interpolation three times: twice in the \(u\)-direction, then once in the \(v\)-direction.
+				This usually provides a better estimate of what the color value would be at a point, but it is more expensive and can lead to blurring.
+			</p>
+		 </p>
+		 <p>
+			For level sampling:
+			<p style="padding-left: 30px">
+				Using the first mipmap level (<code>L_ZERO</code>) is the equivalent of not using any mipmap at all, which saves a bit on memory. It is the fastest 
+				of the level sampling methods but it can cause aliasing when sampled textures are far away or at weird angles.
+			</p>
+			<p style="padding-left: 30px">
+				Using the nearest mipmap level (<code>L_NEAR</code>) is more expensive than <code>L_ZERO</code> but cheaper than <code>L_LINEAR</code>.
+				It helps to avoid aliasing but it can lead to "jumps" in texture appearance when switching between mipmap levels.
+			</p>
+			<p style="padding-left: 30px">
+				Using the linear mipmap level (<code>L_LINEAR</code>) basically performs nearest mipmap sampling at the two closest mipmap levels then interpolates between them.
+				This reduces some of the jumpiness of the nearest mipmap sampling method, but add some additional overhead with the interpolation.
+			</p>
+
+			<p>
+				Supersampling, if done at a high enough rate is the most effective way to deal with aliasing. However, it dwarfs the other methods in memory
+				and computational costs. It requires you to store some multiplicative factor of samples for every pixel, then runs whatever pixel/level sampling method you are using
+				on every single sample. The sampling rate required to fully remove/deal with aliasing can be so high that it becomes impractical for some tasks.
+			</p>
 		 </p>
 
 		<div style="display: flex; flex-direction: column; align-items: center;">

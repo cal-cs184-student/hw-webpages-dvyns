@@ -53,8 +53,7 @@
 		<h2>Section I: Bezier Curves and Surfaces</h2>
 
 		<h3>Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
+		Something somethings.
 		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
@@ -90,7 +89,41 @@
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 		<h3>Part 4: Edge flip</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		Debugging: We had an error where flipping an edge more than once would result in some of the edges disappearing on the wireframe. 
+		
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="flip1.png" height="200px" style="border: 1px solid black;"/>
+				  <figcaption>Pre-flip.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="flip2.png" height="200px" style="border: 1px solid black;"/>
+				  <figcaption>First flip.</figcaption>
+				</td>
+				</tr>
+				<tr>
+				<td style="text-align: center;">
+				  <img src="flip3.png" height="200px" style="border: 1px solid black;"/>
+				  <figcaption>Second flip.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="flip4.png" height="200px" style="border: 1px solid black;"/>
+				  <figcaption>Third flip.</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<par>To debug this we created a diagram to visualize what the labels of our variables should be after flipping an edge.</par>
+			<div style="width: 100%; display: flex; justify-content: center;">
+				<img src="diagramflip.jpeg" height="200px"/>
+			</div>
+		</par>After this it was clear what the issue was in our code and the solution was straightforward. 
+		Our issue was with some of the <code>setNeighbors</code> calls and <code>v*->halfedge()</code> assignments.
+		Aligning these with our diagram resolved the issue.</par>
 
 		<h3>Part 5: Edge split</h3>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.

@@ -136,8 +136,7 @@
             In our implementation of de Casteljau's algorithm, the <b>evaluateStep(...)</b> method iterates over consecutive pairs of input points, computes the linear interpolation using the member variable <b>t</b>, and stores each result in a new vector
             which is returned. Each call to the function performs exactly one level of subdivision.
         </p>
-
-
+        Images of evaluation:
         <div class="split-boundary-row">
 
             <figure>
@@ -171,14 +170,21 @@
             </figure>
 
             <figure>
-                <img src="curve7.png">
-                <figcaption>A slightly different curve </figcaption>
-            </figure>
-            <figure>
                 <img src="curve8.png">
-                <figcaption>A slightly different curve created by moving the original control point</figcaption>
+                <figcaption>Fully evaluated curve. </figcaption>
             </figure>
 
+            <figure>
+                <img src="movedcurve.png">
+                <figcaption>A slightly different curve. </figcaption>
+            </figure>
+        </div>
+            Images of iterating/scrolling through <b>t</b>:
+        <div class="split-boundary-row">
+            <img src="scrollcurv0.png" alt="Boundary before split">
+            <img src="scrollcurv1.png" alt="Boundary split step one">
+            <img src="scrollcurv2.png" alt="Boundary split step two">
+            <img src="scrollcurv3.png" alt="Boundary split step three">
         </div>
 
         <h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
@@ -517,32 +523,115 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
         </div>
 
 
-            <h3>Part 6: Loop subdivision for mesh upsampling</h3>
-            Since we implemented boundary handling in Part 5, we intended from the start to do so with Part 6. For this, we needed to find an update rule for boundary vertices.
-            We found this in the appendix of <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">de Goes et al.</a>
-            Since a position function on our triangle mesh/manifold is a collection of componentwise 0-forms (and because the interior case matches the homework's instructions), 
-            we used Figure 1 from this paper for our boundary vertex update rule:
-            <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="subdivrule.png" width="60%"/>
-            </div>
-            
-            <p>
-                From there we did the five steps outlined in the function comment. 
-                We stored all of our initial vertices and edges in pre-allocated vectors of <code>vertexIters</code> and <code>edgeIters</code> respectively. 
-                We believe the code for this part is relatively well documented so this write-up will just cover the broad strokes of our implementation.
-            </p>
-            <ol>
-                <li>Item 1</li>
-                <li>Item 2</li>
-                <li>Item 3</li>
-                <li>Item 4</li>
-                <li>Item 5</li>
-            </ol>
-
-
+        <h3>Part 6: Loop subdivision for mesh upsampling</h3>
+        Since we implemented boundary handling in Part 5, we intended from the start to do so with Part 6. For this, we needed to find an update rule for boundary vertices.
+        We found this in the appendix of <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">de Goes et al.</a>
+        Since a position function on our triangle mesh/manifold is a collection of componentwise 0-forms (and because the interior case matches the homework's instructions), 
+        we used Figure 1 from this paper for our boundary vertex update rule:
+        <div style="width: 100%; display: flex; justify-content: center;">
+            <img src="subdivrule.png" width="60%"/>
+        </div>
+         
+        <p>
+            From there we did the five steps outlined in the function comment. 
+            We stored all of our initial vertices and edges in pre-allocated vectors of <code>vertexIters</code> and <code>edgeIters</code> respectively. 
+            We believe the code for this part is relatively well documented so this write-up will just cover the broad strokes of our implementation.
+        </p>
+        <ol>
+            <li>We compute the new position of each of the old vertices in line with Figure 1 and store that position in <code>vertex->newPosition</code> for each vertex in our mesh.
+            This position is calculated by iterating through surrounding vertices with a similar do-while structure to Part 3. We handle differently depending on whether or not it is a boundary vertex.</li>
+            <li>
+                <p>
+                We precompute the new position of each of the soon to be created new vertices and store that position in <code>edge->newPosition</code> where <code>edge</code> is the edge that our split will bisect with a vertex.
+                If this is a boundary edge, it is just the midpoint of the two vertices attached to <code>edge</code>.
+                Otherwise, we do the 3/8ths+1/8ths sum of the vertices in both adjacent faces. 
+                Note that these positions are based on the old vertex positions not the new ones created in step one.
+                </p>
+            </li>
+            <li>
+                <p>
+                We then, iterating through our vector of edges, call our split function on every edge <code>e</code>.
+                We also store information about whether a vertex or edge is newly created, which is accounted for in the <code>*->isNew</code> member variable of these objects.
+                For each new vertex <code>v</code> created in this way we set <code>v->newPosition = e->newPosition</code>. 
+                </p>
+            </li>
+            <li>Iterate through all edges in the mesh. At each edge, define a variable for both vertices connected to it: <code>v0</code> and <code>v1</code>.
+                If <code>v0->isNew != v1->isNew</code>, then exactly one of the vertices is new, and thus we call our flip edge function on this edge.
+            </li>
+            <li>Iterate through all vertices in the mesh and update their positions based on the new vertex positions calculated in step one. 
+                In other words assign <code>v->position = v->newPosition</code>.
+            </li>
+        </ol>
+        <p>
+            Sharp corners and edges become significantly rounded after a loop subdivision. 
+            The less dense a region is with vertices the more it gets distorted during a subdivision. 
+            Presplitting on edges can reduce the distortion/rounding, but it can't fully get rid of it.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="idk0.png" height="150px" style="border: 1px solid black;" />
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="idk1.png" height="150px" style="border: 1px solid black;" />
+                    </td>
+                    <td>
+                        <img src="idk2.png" height="150px" style="border: 1px solid black;" />
+                    </td>
+                </tr>
+            </table>
         </div>
 
+        <p>
+            Here is what the cube looks like after a few subdivisions:
+        </p>
+        <div class="split-boundary-row">
+            <img src="cube0.png" alt="Boundary before split">
+            <img src="cube1.png" alt="Boundary split step one">
+            <img src="cube2.png" alt="Boundary split step two">
+            <img src="cube3.png" alt="Boundary split step three">
+        </div>
+        By subdividing all of the edges that cross the faces of the cube we can avoid asymetries:
+        <div class="split-boundary-row">
+            <img src="scube0.png" alt="Boundary before split">
+            <img src="scube1.png" alt="Boundary split step one">
+            <img src="scube2.png" alt="Boundary split step two">
+            <img src="scube3.png" alt="Boundary split step three">
+        </div>
+        This works because all of the vertex updates will be applied symmetrically about all planes of symmetry that a cube normally has.
+        Without the preprocessing some vertices have more incident edges than others, which means their updated positions will differ. 
+        It also means that more vertices will be created near the more connected vertices which compounds the effect during later subdivisions.
+
+        <h4>Extra Credit: Support for Meshes with Boundary</h4>
+
+        The general method was explained above already. So I will just highlight the main issue that we ran into:
+
+        <p>
+            As mentioned in Part 5, there were some issues with our split edge function that came up at this point. 
+            Namely, we were reassigning the halfedges associated with vertices on a triangle in a way that broke the convention that boundary vertices' halfedge methods should point to boundary halfedges.
+            This was fixed by not doing that.
+        </p>
+        <p>
+             It was a real pain to diagnose the problem of why our some of our iterations were not working right, but it was a pretty easy fix once we realized what the issue was.
+        </p>
+        <p>
+            Anyways here are some screenshots of how loop subdivision works on our box with a boundary:
+        </p>
+        <div class="split-boundary-row">
+            <img src="boundbox0.png" alt="Boundary before split">
+            <img src="boundbox1.png" alt="Boundary split step one">
+            <img src="boundbox2.png" alt="Boundary split step two">
+            <img src="boundbox3.png" alt="Boundary split step three">
+        </div>
+
+        <p>
+            If it is unclear from the images, the bottom is still asymmetric as in loop subdivision of the normal cube.
+        </p>
     </div>
+        
+            
+</div>
 </body>
 
 </html>

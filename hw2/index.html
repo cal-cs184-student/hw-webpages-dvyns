@@ -46,7 +46,7 @@
             gap: 25px;
             margin-top: 30px;
         }
-
+        
         .split-boundary-row {
             width: 100%;
             display: grid;
@@ -54,7 +54,7 @@
             gap: 16px;
             margin: 16px 0 24px;
         }
-
+        
         .split-boundary-row img {
             width: 100%;
             height: auto;
@@ -138,41 +138,41 @@
         <div class="split-boundary-row">
 
             <figure>
-                <img src="Screenshot 2026-03-06 at 12.19.18 PM.png">
+                <img src="curve1.png">
                 <figcaption>First step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.38.44 PM.png">
+                <img src="curve2.png">
                 <figcaption>Second step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.38.57 PM.png">
+                <img src="curve3.png">
                 <figcaption>Third step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.39.08 PM.png">
+                <img src="curve4.png">
                 <figcaption>Fourth step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.39.20 PM.png">
+                <img src="curve5.png">
                 <figcaption>Fifth step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.39.30 PM.png">
+                <img src="curve6.png">
                 <figcaption>Sixth step of evaluation</figcaption>
             </figure>
 
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.46.48 PM.png">
+                <img src="curve7.png">
                 <figcaption>A slightly different curve </figcaption>
             </figure>
             <figure>
-                <img src="Screenshot 2026-03-03 at 11.39.42 PM.png">
+                <img src="curve8.png">
                 <figcaption>A slightly different curve created by moving the original control point</figcaption>
             </figure>
 
@@ -185,20 +185,17 @@
         <h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
         <h3>Part 3: Area-weighted vertex normals</h3>
-        Since this is a member function of vertex, we set our <code>HalfedgeIterC</code>, <code>h</code> to the halfedge associated with this vertex. 
-        From there we enter a do-while loop with the condition that (<code>h != halfedge()</code>) with iteration step <code>h->twin()->next()</code>. 
-        The fact that this iterates through the faces is shown in the following diagram:
-         <div style="width: 100%; display: flex; justify-content: center;">
+        Since this is a member function of vertex, we set our <code>HalfedgeIterC</code>, <code>h</code> to the halfedge associated with this vertex. From there we enter a do-while loop with the condition that (<code>h != halfedge()</code>) with iteration
+        step <code>h->twin()->next()</code>. The fact that this iterates through the faces is shown in the following diagram:
+        <div style="width: 100%; display: flex; justify-content: center;">
             <figure>
-                <img src="iteration.jpeg" width="69%"/>
+                <img src="iteration.jpeg" width="69%" />
             </figure>
         </div>
-        We initialize a normal vector <code>n</code> to zero. 
-        In the do-while loop, let <code>p0</code> be the position of vertex associated with the current <code>h</code>, and let <code>p1</code> and <code>p2</code> be the positions of the other two vertices of the face in which <code>h</code> lies.
-        The cross products of two sides of a triangle is proportional to the area of that triangle so we accumulate <code>n</code> with the rule
-        <pre>   n += cross(p1 - p0, p2 - p0)</pre>
-        until we exit the do-while loop. Then we return a normalized version of <code>n</code>.
-        
+        We initialize a normal vector <code>n</code> to zero. In the do-while loop, let <code>p0</code> be the position of vertex associated with the current <code>h</code>, and let <code>p1</code> and <code>p2</code> be the positions of the other two
+        vertices of the face in which <code>h</code> lies. The cross products of two sides of a triangle is proportional to the area of that triangle so we accumulate <code>n</code> with the rule
+        <pre>   n += cross(p1 - p0, p2 - p0)</pre> until we exit the do-while loop. Then we return a normalized version of <code>n</code>.
+
         <div class="image-grid">
             <figure>
                 <img src="normal0.png" alt="">
@@ -215,8 +212,7 @@
         <h4>Implementation</h4>
 
         <p>
-            To implement the <b>edge flip</b> operation, we followed a manual approach as there did not seem to be an easy way to condense the logic into loops. Given two triangles sharing the edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b> flipping replaces the shared edge with <b>(a, d)</b>,
-            producing the new faces
+            To implement the <b>edge flip</b> operation, we followed a manual approach as there did not seem to be an easy way to condense the logic into loops. Given two triangles sharing the edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b>            flipping replaces the shared edge with <b>(a, d)</b>, producing the new faces
             <b>(a, d, c)</b> and <b>(a, b, d)</b>.
         </p>
 
@@ -274,41 +270,41 @@
         <h4>Debugging</h4>
 
         <p>
-        We had an error where flipping an edge more than once would result in some of the edges disappearing on the wireframe. 
-        
+            We had an error where flipping an edge more than once would result in some of the edges disappearing on the wireframe.
 
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-              <tr>
-                <td style="text-align: center;">
-                  <img src="flip1.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Pre-flip.</figcaption>
-                </td>
-                <td style="text-align: center;">
-                  <img src="flip2.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>First flip.</figcaption>
-                </td>
-                </tr>
-                <tr>
-                <td style="text-align: center;">
-                  <img src="flip3.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Second flip.</figcaption>
-                </td>
-                <td style="text-align: center;">
-                  <img src="flip4.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Third flip.</figcaption>
-                </td>
-              </tr>
-            </table>
-        </div>
 
-        <par>To debug this we created a diagram to visualize what the labels of our variables should be after flipping an edge.</par>
-            <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="diagramflip.jpeg" width="100%"/>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                    <tr>
+                        <td style="text-align: center;">
+                            <img src="flip1.png" height="200px" style="border: 1px solid black;" />
+                            <figcaption>Pre-flip.</figcaption>
+                        </td>
+                        <td style="text-align: center;">
+                            <img src="flip2.png" height="200px" style="border: 1px solid black;" />
+                            <figcaption>First flip.</figcaption>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;">
+                            <img src="flip3.png" height="200px" style="border: 1px solid black;" />
+                            <figcaption>Second flip.</figcaption>
+                        </td>
+                        <td style="text-align: center;">
+                            <img src="flip4.png" height="200px" style="border: 1px solid black;" />
+                            <figcaption>Third flip.</figcaption>
+                        </td>
+                    </tr>
+                </table>
             </div>
-        </par>After this it was clear what the issue was in our code and the solution was straightforward. 
-        Our issue was with some of the <code>setNeighbors</code> calls and <code>v*->halfedge()</code> assignments.
-        Aligning these with our diagram resolved the issue.</par>        </p>
+
+            <par>To debug this we created a diagram to visualize what the labels of our variables should be after flipping an edge.</par>
+            <div style="width: 100%; display: flex; justify-content: center;">
+                <img src="diagramflip.jpeg" width="100%" />
+            </div>
+            </par>After this it was clear what the issue was in our code and the solution was straightforward. Our issue was with some of the <code>setNeighbors</code> calls and <code>v*->halfedge()</code> assignments. Aligning these with our diagram resolved
+            the issue.</par>
+        </p>
 
 
 
@@ -319,10 +315,10 @@
         <p>
             To implement the <b>edge split</b> operation, we extended a similar approach to the one used in Part 4, except this time we prepared a diagram ahead of time.
             <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="diagramsplit.jpeg" width="100%"/>
+                <img src="diagramsplit.jpeg" width="100%" />
             </div>
-            As an overview: given two triangles sharing edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b> splitting inserts a new midpoint
-            vertex <b>m</b> and connects it to the opposing vertices <b>a</b> and <b>d</b>. This produces four triangles:
+            As an overview: given two triangles sharing edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b> splitting inserts a new midpoint vertex <b>m</b> and connects it to the opposing vertices <b>a</b> and <b>d</b>. This produces four
+            triangles:
         </p>
 
         <ul>
@@ -396,72 +392,69 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
 
         <div style="display: flex; flex-direction: column; align-items: center;">
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
-              <tr>
-                <td style="text-align: center;">
-                  <img src="sf0.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Pre-flip.</figcaption>
-                </td>
-                <td style="text-align: center;">
-                  <img src="sf1.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>First split.</figcaption>
-                </td>
-                <td>
-                  <img src="sf2.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>First flip.</figcaption>
-                </td>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="sf0.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>Pre-flip.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="sf1.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>First split.</figcaption>
+                    </td>
+                    <td>
+                        <img src="sf2.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>First flip.</figcaption>
+                    </td>
                 </tr>
                 <tr>
-                <td style="text-align: center;">
-                  <img src="sf3.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Second split.</figcaption>
-                </td>
-                <td style="text-align: center;">
-                  <img src="sf4.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Third split.</figcaption>
-                </td>
-                <td>
-                  <img src="sf5.png" height="200px" style="border: 1px solid black;"/>
-                  <figcaption>Fourth split.</figcaption>
-                </td>
-              </tr>
+                    <td style="text-align: center;">
+                        <img src="sf3.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>Second split.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="sf4.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>Third split.</figcaption>
+                    </td>
+                    <td>
+                        <img src="sf5.png" height="200px" style="border: 1px solid black;" />
+                        <figcaption>Fourth split.</figcaption>
+                    </td>
+                </tr>
             </table>
         </div>
 
         <h4>Extra Credit</h4>
-        Following the success of this implementation we decided to implement rules for splitting on a boundary edge.
-        Our solution was started with this diagram:
+        Following the success of this implementation we decided to implement rules for splitting on a boundary edge. Our solution was started with this diagram:
         <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="splitbound.jpeg" width="100%"/>
+            <img src="splitbound.jpeg" width="100%" />
         </div>
-        We first test that <code>e0</code> is a boundary edge, then select the halfedge that is not a boundary half edge to be <code>h0a</code>.
-        Then we define the rest of our pre-existing variables via mesh traversal starting from <code>h0a</code>. 
-        We create a new vertex with position obtained as a bisection of <code>v0=a</code> and <code>v1=b</code> as before. Then we
-        create four <code>halfedgeIter</code>, two new <code>edgeIter</code> objects, and one new <code>faceIter</code> object, all corresponding to the red lines in the diagram.
-        We then perform the appropriate assignments manually with the <code>setNeighbors</code> method.
+        We first test that <code>e0</code> is a boundary edge, then select the halfedge that is not a boundary half edge to be <code>h0a</code>. Then we define the rest of our pre-existing variables via mesh traversal starting from <code>h0a</code>. We
+        create a new vertex with position obtained as a bisection of <code>v0=a</code> and <code>v1=b</code> as before. Then we create four <code>halfedgeIter</code>, two new <code>edgeIter</code> objects, and one new <code>faceIter</code> object, all
+        corresponding to the red lines in the diagram. We then perform the appropriate assignments manually with the <code>setNeighbors</code> method.
 
         <p>
-            Now we wrote our code initially, without really testing it on any meshes in the GUI. 
-            Since there was no surface with boundary edges (that we could find) in the provided codebase we, we created a very simple mesh in Blender.
-            This mesh is a cube with its top face removed, as shown below.
+            Now we wrote our code initially, without really testing it on any meshes in the GUI. Since there was no surface with boundary edges (that we could find) in the provided codebase we, we created a very simple mesh in Blender. This mesh is a cube with its
+            top face removed, as shown below.
         </p>
         <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="boundbox.png" width="50%"/>
+            <img src="boundbox.png" width="50%" />
         </div>
         <p>
-            As a sanity check, we tried to make sure that the stop ring was processed as a boundary by <code>meshedit</code>.
-            We found that it was correctly registered. However, any time we tried to take the twin of a halfedge that was opposite to the boundary, the program to segfault.
-            Luckily, this happened prior to us even testing <code>splitEdge</code>, so we were pretty sure the issue was not with our code.
-            As expected, when we tried to split a boundary edge, <code>meshedit</code> segfaulted in that case as well.
+            As a sanity check, we tried to make sure that the stop ring was processed as a boundary by <code>meshedit</code>. We found that it was correctly registered. However, any time we tried to take the twin of a halfedge that was opposite to the
+            boundary, the program to segfault. Luckily, this happened prior to us even testing <code>splitEdge</code>, so we were pretty sure the issue was not with our code. As expected, when we tried to split a boundary edge, <code>meshedit</code> segfaulted
+            in that case as well.
         </p>
 
         <p>
-            Initially we thought the issue could be that the <code>meshedit</code> program was not correctly assigning the <code>halfedge->twin()</code> member on border edges during the mesh processing. We inspected the <code>halfedgemesh.cpp</code> and <code>halfedgemesh.h</code> files and could not find any errors in assignment.
+            Initially we thought the issue could be that the <code>meshedit</code> program was not correctly assigning the <code>halfedge->twin()</code> member on border edges during the mesh processing. We inspected the <code>halfedgemesh.cpp</code>            and <code>halfedgemesh.h</code> files and could not find any errors in assignment.
         </p>
         <p>
-            From there we checked the rendering pipeline starting from the part of meshedit.cpp/h that handles keyboard input. This leads to a call on the MeshEdit::renderHalfedge function which makes a call to face->normal() on the boundary face. The face->normal() member function of Face class makes a call to face->halfEdge().
+            From there we checked the rendering pipeline starting from the part of meshedit.cpp/h that handles keyboard input. This leads to a call on the MeshEdit::renderHalfedge function which makes a call to face->normal() on the boundary face. The face->normal()
+            member function of Face class makes a call to face->halfEdge().
         </p>
         <p>
-            Inspecting the definition of the boundary face constructor is where we found a potential issue. It seemed as though the boundary face->halfedge() was never assigned to any of the boundary halfedges, despite iterating through and constructing a boundary loop. At line:314 of <code>halfEdgeMesh.cpp</code> we added the lines:
+            Inspecting the definition of the boundary face constructor is where we found a potential issue. It seemed as though the boundary face->halfedge() was never assigned to any of the boundary halfedges, despite iterating through and constructing a boundary
+            loop. At line:314 of <code>halfEdgeMesh.cpp</code> we added the lines:
         </p>
         <pre>   
 314            if ( degree > 0 ) 
@@ -470,12 +463,14 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
 317            }
         </pre>
         <p>
-            After recompiling we no longer had an issue with switching to the boundary twin halfEdge in the GUI. We are unsure whether or not this is the intended way for this to work, or if this is even the best way to fix problem. But it works for our purposes so we kept it.
+            After recompiling we no longer had an issue with switching to the boundary twin halfEdge in the GUI. We are unsure whether or not this is the intended way for this to work, or if this is even the best way to fix problem. But it works for our purposes
+            so we kept it.
         </p>
 
         <p>
-            Now we could move on to debugging the split Edge, which went rather smoothly all things considered. The only real hurdle we ran into in <code>student_code.cpp</code> with this implementation was forgetting to make sure that the boundary halfedge that pointed to <code>h0b</code> pointed to <code>h4b</code> after the split.
-            Once this issue was diagnosed, we were able to fix it by traversing the boundary loop until <code>prev->next() == h0b</code>, at which point we exit the do-while loop and then we set <code>prev->next() = h4b</code>.
+            Now we could move on to debugging the split Edge, which went rather smoothly all things considered. The only real hurdle we ran into in <code>student_code.cpp</code> with this implementation was forgetting to make sure that the boundary halfedge
+            that pointed to <code>h0b</code> pointed to <code>h4b</code> after the split. Once this issue was diagnosed, we were able to fix it by traversing the boundary loop until <code>prev->next() == h0b</code>, at which point we exit the do-while
+            loop and then we set <code>prev->next() = h4b</code>.
         </p>
 
         <p>
@@ -501,34 +496,30 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
         </div>
 
 
-            <h3>Part 6: Loop subdivision for mesh upsampling</h3>
-            Since we implemented boundary handling in Part 5, we intended from the start to do so with Part 6. For this, we needed to find an update rule for boundary vertices.
-            We found this in the appendix of <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">de Goes et al.</a>
-            Since a position function on our triangle mesh/manifold is a collection of componentwise 0-forms (and because the interior case matches the homework's instructions), 
-            we used Figure 1 from this paper for our boundary vertex update rule:
-            <div style="width: 100%; display: flex; justify-content: center;">
-                <img src="subdivrule.png" width="60%"/>
-            </div>
-            
-            <p>
-                From there we did the five steps outlined in the function comment. 
-                We stored all of our initial vertices and edges in pre-allocated vectors of <code>vertexIters</code> and <code>edgeIters</code> respectively. 
-                We believe the code for this part is relatively well documented so this write-up will just cover the broad strokes of our implementation.
-            </p>
-            <ol>
-                <li>Item 1</li>
-                <li>Item 2</li>
-                <li>Item 3</li>
-                <li>Item 4</li>
-                <li>Item 5</li>
-            </ol>
-
-            <h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-            in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-
+        <h3>Part 6: Loop subdivision for mesh upsampling</h3>
+        Since we implemented boundary handling in Part 5, we intended from the start to do so with Part 6. For this, we needed to find an update rule for boundary vertices. We found this in the appendix of <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">de Goes et al.</a>        Since a position function on our triangle mesh/manifold is a collection of componentwise 0-forms (and because the interior case matches the homework's instructions), we used Figure 1 from this paper for our boundary vertex update rule:
+        <div style="width: 100%; display: flex; justify-content: center;">
+            <img src="subdivrule.png" width="60%" />
         </div>
+
+        <p>
+            From there we did the five steps outlined in the function comment. We stored all of our initial vertices and edges in pre-allocated vectors of <code>vertexIters</code> and <code>edgeIters</code> respectively. We believe the code for this part
+            is relatively well documented so this write-up will just cover the broad strokes of our implementation.
+        </p>
+        <ol>
+            <li>Item 1</li>
+            <li>Item 2</li>
+            <li>Item 3</li>
+            <li>Item 4</li>
+            <li>Item 5</li>
+        </ol>
+
+        <h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+
+    </div>
 </body>
 
 </html>

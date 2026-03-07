@@ -50,7 +50,7 @@
         .split-boundary-row {
             width: 100%;
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 16px;
             margin: 16px 0 24px;
         }
@@ -59,16 +59,16 @@
             width: 100%;
             height: auto;
             display: block;
-            border-radius: 6px;
+            border-radius: 3px;
         }
         
         figure {
             text-align: center;
             margin: 0;
-            background: #fafafa;
+            background: #fafafa00;
             padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #eee;
+            border-radius: 3px;
+            border: 0px solid #eee;
         }
         
         figure img {
@@ -93,11 +93,6 @@
         <br> Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
 
         <br> Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-
-        <figure>
-            <img src="teapot.png" alt="Teapot" style="width:50%" />
-            <figcaption>You can add images with captions!</figcaption>
-        </figure>
 
         <!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -140,7 +135,7 @@
         </p>
 
 
-        <div class="image-grid">
+        <div class="split-boundary-row">
 
             <figure>
                 <img src="Screenshot 2026-03-06 at 12.19.18 PM.png">
@@ -190,15 +185,37 @@
         <h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
         <h3>Part 3: Area-weighted vertex normals</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Since this is a member function of vertex, we set our <code>HalfedgeIterC</code>, <code>h</code> to the halfedge associated with this vertex. 
+        From there we enter a do-while loop with the condition that (<code>h != halfedge()</code>) with iteration step <code>h->twin()->next()</code>. 
+        The fact that this iterates through the faces is shown in the following diagram:
+         <div style="width: 100%; display: flex; justify-content: center;">
+            <figure>
+                <img src="iteration.jpeg" width="69%"/>
+            </figure>
+        </div>
+        We initialize a normal vector <code>n</code> to zero. 
+        In the do-while loop, let <code>p0</code> be the position of vertex associated with the current <code>h</code>, and let <code>p1</code> and <code>p2</code> be the positions of the other two vertices of the face in which <code>h</code> lies.
+        The cross products of two sides of a triangle is proportional to the area of that triangle so we accumulate <code>n</code> with the rule
+        <pre>   n += cross(p1 - p0, p2 - p0)</pre>
+        until we exit the do-while loop. Then we return a normalized version of <code>n</code>.
+        
+        <div class="image-grid">
+            <figure>
+                <img src="normal0.png" alt="">
+                <figcaption>Without vertex normals..</figcaption>
+            </figure>
+            <figure>
+                <img src="normal1.png" alt="">
+                <figcaption>With vertex normals.</figcaption>
+            </figure>
+        </div>
 
         <h3>Part 4: Edge flip</h3>
 
         <h4>Implementation</h4>
 
         <p>
-            To implement the <b>edge flip</b> operation, I followed a systematic reassignment strategy. Given two triangles sharing the edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b> flipping replaces the shared edge with <b>(a, d)</b>,
+            To implement the <b>edge flip</b> operation, we followed a manual approach as there did not seem to be an easy way to condense the logic into loops. Given two triangles sharing the edge <b>(b, c)</b> faces <b>(a, b, c)</b> and <b>(c, b, d)</b> flipping replaces the shared edge with <b>(a, d)</b>,
             producing the new faces
             <b>(a, d, c)</b> and <b>(a, b, d)</b>.
         </p>
@@ -236,22 +253,20 @@
             </li>
 
             <br>
-
             <li>
                 <b>Update edge and face halfedge pointers.</b><br> Each edge and face was assigned one of its associated halfedges in the new configuration.
             </li>
-
         </ol>
-        <div class="img grid">
-            <figure>
-                <img src="Screenshot 2026-03-04 at 12.35.32 PM.png" alt="">
-                <figcaption>before edge flip</figcaption>
-            </figure>
-            <figure>
-                <img src="Screenshot 2026-03-04 at 12.38.43 PM.png" alt="">
-                <figcaption>After edge flip</figcaption>
-            </figure>
 
+        <div class="image-grid">
+            <figure>
+                <img src="edgeflip0.png" alt="">
+                <figcaption>Before edge flips.</figcaption>
+            </figure>
+            <figure>
+                <img src="edgeflip1.png" alt="">
+                <figcaption>After edge flips.</figcaption>
+            </figure>
         </div>
 
 
@@ -369,6 +384,49 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
             </li>
 
         </ol>
+
+        <p>
+            The main challenge was ensuring that the new vertex <code>v2</code> and the original vertices still pointed to valid outgoing halfedges after the split. Because some halfedges are reassigned to new faces during the operation, their corresponding
+            vertex pointers must also be updated to maintain consistency in the halfedge structure.
+        </p>
+
+        <p>
+            Some example flips and splits on a zoomed in <code>bean.dae</code>:
+        </p>
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+              <tr>
+                <td style="text-align: center;">
+                  <img src="sf0.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>Pre-flip.</figcaption>
+                </td>
+                <td style="text-align: center;">
+                  <img src="sf1.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>First split.</figcaption>
+                </td>
+                <td>
+                  <img src="sf2.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>First flip.</figcaption>
+                </td>
+                </tr>
+                <tr>
+                <td style="text-align: center;">
+                  <img src="sf3.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>Second split.</figcaption>
+                </td>
+                <td style="text-align: center;">
+                  <img src="sf4.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>Third split.</figcaption>
+                </td>
+                <td>
+                  <img src="sf5.png" height="200px" style="border: 1px solid black;"/>
+                  <figcaption>Fourth split.</figcaption>
+                </td>
+              </tr>
+            </table>
+        </div>
+
         <h4>Extra Credit</h4>
         Following the success of this implementation we decided to implement rules for splitting on a boundary edge.
         Our solution was started with this diagram:
@@ -428,49 +486,42 @@ v2->position = (b->position + c->position) / 2.0;</pre> This places the new vert
             <img src="pre-split.png" alt="Boundary before split">
             <img src="boundsplit1.png" alt="Boundary split step one">
             <img src="boundsplit2.png" alt="Boundary split step two">
+            <img src="boundsplit3.png" alt="Boundary split step three">
         </div>
 
-        <h4>Debugging</h4>
-
         <p>
-            Prior to adding boundary conditions, our structured approach resulted in a pretty painless initial implementation. 
-            There were some minor issues that arose from this later one when implementing loop subdivision with boundaries, but that is discussed in the Part 6 debugging section.
+            Some pictures of splits and flips:
         </p>
 
-        <p>
-            The main challenge was ensuring that the new vertex <code>v2</code> and the original vertices still pointed to valid outgoing halfedges after the split. Because some halfedges are reassigned to new faces during the operation, their corresponding
-            vertex pointers must also be updated to maintain consistency in the halfedge structure.
-        </p>
-        <div class="image-grid">
-
-            <figure>
-                <img src="Screenshot 2026-03-04 at 12.35.32 PM.png">
-                <figcaption>Before the edgesplit</figcaption>
-            </figure>
-
-            <figure>
-                <img src="Screenshot 2026-03-04 at 5.25.50 PM.png">
-                <figcaption>After the edge flip</figcaption>
-            </figure>
-
-            <figure>
-                <img src="Screenshot 2026-03-04 at 12.38.43 PM.png">
-                <figcaption>Before the edgesplit and edgeflip</figcaption>
-            </figure>
-            <figure>
-                <img src="Screenshot 2026-03-04 at 5.27.07 PM.png">
-                <figcaption>After the edgeflip and edgesplit</figcaption>
-            </figure>
+        <div class="split-boundary-row">
+            <img src="splitflip1.png" alt="one split">
+            <img src="splitflip2.png" alt="flip after split">
+            <img src="splitflip3.png" alt="split after flip">
+            <img src="splitflip4.png" alt="split after split">
         </div>
 
 
             <h3>Part 6: Loop subdivision for mesh upsampling</h3>
-            an update rule outlined in <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">this paper</a>.
-            Considering position acts as a 0-form on our mesh topology we referenced the figure
+            Since we implemented boundary handling in Part 5, we intended from the start to do so with Part 6. For this, we needed to find an update rule for boundary vertices.
+            We found this in the appendix of <a href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">de Goes et al.</a>
+            Since a position function on our triangle mesh/manifold is a collection of componentwise 0-forms (and because the interior case matches the homework's instructions), 
+            we used Figure 1 from this paper for our boundary vertex update rule:
             <div style="width: 100%; display: flex; justify-content: center;">
                 <img src="subdivrule.png" width="60%"/>
             </div>
-            and created
+            
+            <p>
+                From there we did the five steps outlined in the function comment. 
+                We stored all of our initial vertices and edges in pre-allocated vectors of <code>vertexIters</code> and <code>edgeIters</code> respectively. 
+                We believe the code for this part is relatively well documented so this write-up will just cover the broad strokes of our implementation.
+            </p>
+            <ol>
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+                <li>Item 4</li>
+                <li>Item 5</li>
+            </ol>
 
             <h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor

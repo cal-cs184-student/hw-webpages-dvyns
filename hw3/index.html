@@ -135,6 +135,55 @@ isect->bsdf = this->get_bsdf();
 </code></pre>
 			Then we need to update <code>r.max_t = t</code>. (We forgot to do this and the banana looked all messed up.)
 		</p>
+		<h3>Task 4: Ray-Sphere Intersection</h3>
+		<p>
+			For this task, we used the method shown in lecture to test for ray intersections with sphere primitives.
+			The bulk of this is done in the <code>Sphere::test()</code> function, which is called by <code>Sphere:has_intersection()</code> and <code>Sphere::intersect()</code>.
+		</p>
+		<p>
+			<code>Sphere::test()</code>returns <code>false</code>> if there is no intersection and <code>true</code> otherwise.
+			These are found by solving the quadratic formula with the following coefficients from the ray-tracing slides:
+<pre><code>const double a = dot(r.d, r.d);
+const double b = 2 * dot(r.d, r.o - o);
+const double c = dot(r.o - o, r.o - o) - this->r * this->r;
+</code></pre>
+			We know there are no solutions if the discrimant is negative, so we return false if it is.
+			Otherwise we assign the intersection times to <code>t1</code> and <code>t2</code> where <code>t1</code> is the smaller value.
+			We update <code>r.max_t</code> to the smallest intersection time between <code>r.min_t</code> and <code>r.max_t</code> if it exists.
+		</p>
+		<p>
+			Like in Task 3, <code>Sphere::has_intersection()</code> is done here. 
+			To finish <code>Sphere::intersect()</code>, assign <code>t</code>, <code>primitive</code>, and <code>bsdf</code> to their expected values.
+			The normal at the intersection point on the sphere is just the difference between the intersection point on the surface of the sphere (<code>r.o+t * r.d</code>) and the origin of the sphere.
+			So we assign 
+			<pre><code>isect->n = (r.o + t * r.d - this->o).unit();</code></pre>
+		</p>
+
+		<h3>Some rendered .dae files:</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="cube_screenshot_3-17_12-27-41.png" style="width: 100%;"/>
+				  <figcaption>Cube</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="teapot_screenshot_3-17_12-24-19.png" style="width: 100%;"/>
+				  <figcaption>Teapot</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="banana_screenshot_3-17_12-22-57.png" style="width: 100%;"/>
+				  <figcaption>Banana</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="CBbunny_screenshot_3-17_12-26-29.png" style="width: 100%;"/>
+				  <figcaption>Bunny</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">

@@ -1,6 +1,16 @@
 <html>
 	<head>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+		<script>
+			MathJax = {
+				tex: {
+					inlineMath: [['$', '$'], ['\\(', '\\)']],
+					displayMath: [['$$', '$$'], ['\\[', '\\]']]
+				},
+				chtml: { scale: 0.9 },
+				svg: { scale: 0.9 }
+			};
+		</script>
+		<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 		<style>
 			h1 {
@@ -22,6 +32,10 @@
 
 			body {
 				font-family: 'Inter', sans-serif;
+			}
+
+			code, pre {
+				font-size: 1em;
 			}
 		</style>
 	</head>
@@ -48,7 +62,79 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>Ray Generation and Intersection</h3>
+		<p>
+			For each pixel, ideally we want the color to correspond to the integral of the radiance over that pixel.
+			To estimate this, we generate a number of sample rays that intersect that pixel's area and find the nearest object (or objects, if we encode transparency) each of those rays intersect.
+			This approach is motivated by Monte Carlo integration.
+			At each ray intersection, we estimate how much light is reflected into the camera from that point.
+			Summing this all up and normalizing gives us a decent estimate of the pixel color.
+		</p>
+		<p>
+			For this part we encode the basic logic for generating these rays and program some basic tests for intersection with primitives in the scene.
+			Because it is expensive the check for intersection with all primitives, we will later use a bounding boxes to limit how many of these tests we are doing.
+		</p>
+
+		<h3> Task 1: Generating Camera Rays</h3>
+		<p> 
+			In this part we note that the input \((x, y)\in [0, 1]\times[0,1]\) and we want the \(x\) and \(y\) components of the output \((x_c, y_c)\) in camera space to be in the range 
+			\[(x_c, y_c) \in \left[-\tan\left(\frac{hFov}{2}\right), \tan\left(\frac{hFov}{2}\right)\right]\times \left[-\tan\left(\frac{vFov}{2}\right), \tan\left(\frac{vFov}{2}\right)\right]\].
+			So construct a mappig that will take 0 to \(-\tan\left(\frac{hFov}{2}\right)\) and 1 to \(\tan\left(\frac{hFov}{2}\right)\) for the \(x\) component, and similarly for the \(y\) component linearly interpolating for points in between.
+			We write this as:
+		</p>
+		<pre><code>cam_space_x = 2.0 * (x - 0.5) * tan(radians(this->hFov) / 2.0)
+cam_space_y = 2.0 * (y - 0.5) * tan(radians(this->vFov) / 2.0)
+</code></pre>
+		<p>
+			We place these points in the plane at $z=-1$ as a <code>Vector3D</code> object. 
+			Then we multiply this vector by the <code>c2w</code> transformation matrix to get the final ray direction, normalize it to unit length, and assign this direction, position, <code>min_t</code>, and <code>max_t</code> to the returned ray.
+		</p>
+
+		<h3>Task 2: Generating Pixel Samples</h3>
+
+		<p>
+			We loop through <code>nsaa</code> sampling from <code>GridUniformSampler2D()</code> at each point.
+			Each sample, which is between 0 and 1 in both directions, is added to the position $(x, y)$ to get the location within the corresponding pixel.
+			We then normalize by the buffer width in the $x$ direction and buffer height in the $y$ direction so that $x+x_{sample}$ and $y+y_{sample}$ are normalized.
+		</p>
+		<p>
+			This normalized sample is then passed into the generate ray function from Task 1.
+			The resulting ray from <code>camera->generate_ray()</code> is passed into <code>est_global_radiance()</code>.
+			We accumulate these estimated radiances and normalize by <code>nsaa</code>. 
+			We then update the pixel color with this accumulation.
+		</p>
+
+		<h3>Task 3: Ray Triangle Intersection</h3>
+		<p>
+			For this task, we implemented the Möller-Trumbore algorithm as described in the ray-tracing slides.
+			Instead of directly doing the scalar multiplication
+			\[
+				\frac{1}{S_1\cdot E_1}\begin{bmatrix} S_2\cdot E_2 \\ S_1\cdot S \\ S_2\cdot D\end{bmatrix}
+			\]
+			with vectors, we calculated each point separately, since each element of the resulting vector has a separate condition necessary for intersection.
+			Doing this saves computation when earlier checks fail.
+		</p>
+		<p>
+			$t = S_2\cdot E_2 / (S_1\cdot E_1)$: The time of intersection $t$ must be in between <code>r.min_t</code> and <code>r.max_t</code>. If it isn't we return <code>false</code>.
+		</p>
+		<p>
+			$b_1 = S_1\cdot S / (S_1\cdot E_1)$: The barycentric coordinate $b_1$ must be in the range $[0, 1]$. Otherwise the point lies outside the trieangle and we return <code>false</code>.
+		</p>
+		<p>
+			$b_2 = S_2\cdot D / (S_1\cdot E_1)$: The sum of barycentric coordinates $b_1 + b_2$ must be in the range $[0, 1]$. 
+			Otherwise the point lies outside the triangle, and we return <code>false</code>.
+		</p>
+		<p>
+			If all of these conditions are met, than the given ray intersects the interior of the current triangle at time $t$. 
+			In <code>Triangle::has_intersection()</code> we are done.
+			For <code>Triangle::intersect()</code> we still need to assign values to the intersection object:
+			<pre><code>isect->t = t;
+isect->n = ((1 - b_1 - b_2) * n1 + b_1 * n2 + b_2 * n3).unit();
+isect->primative = this;
+isect->bsdf = this->get_bsdf();
+</code></pre>
+			Then we need to update <code>r.max_t = t</code>. (We forgot to do this and the banana looked all messed up.)
+		</p>
 
 		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">

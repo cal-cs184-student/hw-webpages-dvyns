@@ -181,35 +181,202 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
 			  </tr>
 			</table>
 		</div>
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<h3>Oh no...</h3>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="CBlucy_screenshot_screwed up.png" style="width: 100%;"/>
 				</td>
 				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="maxplanck_screwed.png" style="width: 100%;"/>
 				</td>
 			  </tr>
 			</table>
 		</div>
+		<p>
+			As can be seen in the above screenshots, some regions on the higher poly meshes have weird artifacting when rendered.
+			It turns out there was an error in our implementation of the <code>Triangle:intersect()</code>/<code>Triangle::has_intersection()</code> functions that didn't rear its head until we could render some of the larger models.
+			We initially thought this was a problem with our BVH construction, but brute force rendering Max Planck resulted in the same problem in the same spots.
+		</p>
+		<p>
+			So we took to inspecting the BVH mesh around Max Planck's particularly problematic nose:
+			<img src="maxnose.png" style="width: 100%;"/>
+			It seemed like problem regions are areas with very dense/small triangle meshes.
+			That suggested that there could be some numerical issues with our edge testing.
+			This would make sense since we were doing our barycentric coordinate checks <i>after</i> dividing by $S_1\cdot E_1$.
+		</p>
+		<p>
+			We then changed the logic to do the same checks, but multiplying both sides of the inequalities by $S_1\cdot E_1$ (<code>denom</code>).
+			This seemed to resolve our problem. 
+		</p>
+		<p>
+			We also tried switching from <code>float</code> operations to <code>double</code> operations, which seemed to have no noticeable impact on artifacting.
+			But it also seemed to have no noticeable impact on performance so we kept it.
+		</p>
+		<h3>Post Nose Job:</h3>
+		<img src="maxnosejob.png" style="width: 100%;"/>
 		
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			For constructing our bounding volume hierarchy, we used an exhaustive surface area heuristic.
+			First we check to make sure that we have more than <code>max_leaf_size</code> primitives in our current node. 
+			If not, this is a leaf and we return the current node. 
+			Otherwise we move on to constructing partitions.
+		</p>
+			There, on each axis, we first sort all primitves into a vector ordered by their centroids axis position.
+			Then we construct splits for each point along each axis into two vectors. For the <code>first_half</code> vector, we have:
+			<pre><code>std::vector<BBox> first_half(n);
+    first_half[0] = sorted[0]->get_bbox();
+    for (size_t i = 1; i < n; i++) {
+      first_half[i] = first_half[i - 1];
+      first_half[i].expand(sorted[i]->get_bbox());
+    }</code></pre>
+			This chooses the furthest "left" primitive, gets its bounding box, and successively expands it for each additional point.
+			The <code>second_half</code> vector does the same in reverse, starting from the furthest "right" primitive.
+			These definitions mean that the set of primitives contained in the union of <code>first_half[split-1]</code> and <code>second_half[split]</code> is mutually disjoint and contains all primitives, as desired from a split.
+			
+		<p> 
+			We keep track of the best split and best axis based on the cost function
+			<pre><code>double cost = C_trav + (first_half[split - 1].surface_area() * split + 
+                        second_half[split].surface_area() * (n - split)) / 
+			bbox.surface_area();
+</code></pre>
+			where <code>C_trav = 0.125</code>, the estimated traversal cost from lecture. 
+			To clarify, <code>split</code> is an iterator over the sorted vector of primitives whose position determines the split point.
+		</p>
+
+		<p>
+			All of this is done on a copy of the vector of primitives with sorting handled by <code>std::sort()</code>.
+			We check that <code>best_cost</code> is less than number of primitives $n$, the estimated relative cost of iterating through all primitives in the node.
+			If it is greater than $n$ we estimate a leaf to be more efficient than any split and return the node.
+		</p>
+		<p>
+			Otherwise, we sort the real vector of primitives (calling <code>std::sort()</code> directly on <code>start</code> and <code>end</code>) along the <code>best_axis</code> in order of centroid position on that axis.
+			Then we recurse on both splits (using the convention that <code>end</code> is exclusive):
+			<pre><code>auto mid = start + best_split;
+node->l = construct_bvh(start, mid, max_leaf_size);
+node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
+		</p>
+		<p>
+			The function returns the current node.
+		</p>
+		<p>
+			Our intersection algorithms work pretty much as would be expected.
+			For the bounding box, we check each of the $x,y,z$ planes and use the minimum time intersection if there is one.
+			We iterate through the BVH in the same way you would a recursive tree traversal. 
+			The <code>has_intersection</code> function stops uses a logic shortcut to avoid doing unnecessary work.
+		</p>
+
+		<h3>BVH Scene Renders</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center; padding: 12px;">
+						<img src="wall-e_screenshot_3-18_14-30-1.png" alt="Wall-E render screenshot" style="width: 100%;"/>
+						<figcaption>Wall-E</figcaption>
+					</td>
+					<td style="text-align: center; padding: 12px;">
+						<img src="blob_screenshot_3-18_14-30-19.png" alt="Blob render screenshot" style="width: 100%;"/>
+						<figcaption>Blob</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center; padding: 12px;">
+						<img src="CBlucy_screenshot_3-18_15-30-45.png" alt="Lucy render screenshot" style="width: 100%;"/>
+						<figcaption>Lucy</figcaption>
+					</td>
+					<td style="text-align: center; padding: 12px;">
+						<img src="dragon_screenshot_3-18_14-30-55.png" alt="Dragon render screenshot" style="width: 100%;"/>
+						<figcaption>Dragon</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3>Naive vs. BVH Timing Comparison</h3>
+		<div style="position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, 95vw); margin: 24px 0;">
+			<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+				<tr>
+					<th style="width: 130px; padding: 10px 12px; text-align: left;">Scene</th>
+					<th style="padding: 10px 12px; text-align: center;">Naive</th>
+					<th style="padding: 10px 12px; text-align: center;">With BVH</th>
+				</tr>
+				<tr>
+					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 75.8627 s</figcaption>
+						</figure>
+					</td>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 0.1238 s</figcaption>
+						</figure>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 36.7396 s</figcaption>
+						</figure>
+					</td>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 0.0836 s</figcaption>
+						</figure>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 1.7434 s</figcaption>
+						</figure>
+					</td>
+					<td style="padding: 12px; vertical-align: top;">
+						<figure style="margin: 0;">
+							<img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<figcaption style="margin-top: 8px;">Render time: 0.0745 s</figcaption>
+						</figure>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+			The performance gains of our BVH scale with the size/density of the meshes.
+			Max Planck, which is the most complex scene, shows the most significant improvement.
+			This is expected, since tree searching is roughly $O(\log n)$, where $n$ is the number of primitives whereas the naive approach is approximately $O(n)$.
+			There are some edge cases to this, but our performance improvement should approach that asymptotic behavior as the mesh gets large enough.
+		</p><p>
+			The other significant point to note, however, is that the BVH construction time also scales with mesh size.
+			The BVH construction times are not that noticeable with these meshes, but when rendering something like <code>wall-e.dae</code>...
+		</p>
+		<figure style="margin: 0;">
+				<img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+		</figure>
+		<p>
+			and we see that now the BVH construction time dwarfs our rendering time by an order of magnitude.
+		</p>
+		<p>
+			Assume a reasonably well balanced tree, which should be a reasonable assumption in this case. 
+			Then, for the construction time, we have the recurrence relation
+			\[ T(n) = 2T(n/2) + O(n\log n) \implies T(n) = O(n\log^2 n). \]
+			(This is because runtime is dominated by the $O(n\log n)$ sorting at each level).
+		</p>
+		<p>
+			If we instead used a bucketed approach, like in PBRT, we would only need to partition the primitives which is an $O(n)$ operation. 
+			Hence, from the recurrence, we would get an asymptotic bound $T(n)=O(n\log n)$. 
+			This is significantly better, and suggests we would probably be better off using a bucketed approach. 
+		</p><p>
+			We will discuss tradeoffs with this approach alongside a further discussion on BVH heuristics in the extra credit section.
+		</p>
 
 		<h2>Part 3: Direct Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.

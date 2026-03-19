@@ -367,7 +367,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 				<img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 50%; height: auto; margin: 0 auto"/>
 		</figure>
 		<p>
-			and we see that now the BVH construction time dwarfs our rendering time by an order of magnitude.
+			and we see that the BVH construction time dwarfs our rendering time by an order of magnitude!
 		</p>
 		<p>
 			Assume a reasonably well balanced tree, which should be a reasonable assumption in this case. 
@@ -376,7 +376,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 			(This is because runtime is dominated by the $O(n\log n)$ sorting at each level).
 		</p>
 		<p>
-			If we instead used a bucketed approach, like in PBRT, we would only need to partition the primitives which is an $O(n)$ operation. 
+			If we instead used a bucketed approach, like in PBRT, we would only need to partition the primitives: this is an $O(n)$ operation. 
 			Hence, from the recurrence, we would get an asymptotic bound $T(n)=O(n\log n)$. 
 			This is significantly better, and suggests we would probably be better off using a bucketed approach. 
 		</p><p>

@@ -28,6 +28,9 @@
 
 			img {
 				display: inline-block;
+				box-sizing: border-box;
+				border: 1px solid #d0d0d0;
+				border-radius: 4px;
 			}
 
 			body {
@@ -201,7 +204,9 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
 		</p>
 		<p>
 			So we took to inspecting the BVH mesh around Max Planck's particularly problematic nose:
-			<img src="maxnose.png" style="width: 100%;"/>
+		</p>
+			<img src="maxnose.png" style="width: 50%; margin: 0 auto; display: block;"/>
+		<p>
 			It seemed like problem regions are areas with very dense/small triangle meshes.
 			That suggested that there could be some numerical issues with our edge testing.
 			This would make sense since we were doing our barycentric coordinate checks <i>after</i> dividing by $S_1\cdot E_1$.
@@ -215,7 +220,7 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
 			But it also seemed to have no noticeable impact on performance so we kept it.
 		</p>
 		<h3>Post Nose Job:</h3>
-		<img src="maxnosejob.png" style="width: 100%;"/>
+		<img src="maxnosejob.png" style="display: block; margin: 0 auto; width: 70%;"/>
 		
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
 		<p>
@@ -306,13 +311,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 75.8627 s</figcaption>
 						</figure>
 					</td>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 0.1238 s</figcaption>
 						</figure>
 					</td>
@@ -321,13 +326,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 36.7396 s</figcaption>
 						</figure>
 					</td>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 0.0836 s</figcaption>
 						</figure>
 					</td>
@@ -336,13 +341,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 1.7434 s</figcaption>
 						</figure>
 					</td>
 					<td style="padding: 12px; vertical-align: top;">
 						<figure style="margin: 0;">
-							<img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+							<img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto;"/>
 							<figcaption style="margin-top: 8px;">Render time: 0.0745 s</figcaption>
 						</figure>
 					</td>
@@ -359,7 +364,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 			The BVH construction times are not that noticeable with these meshes, but when rendering something like <code>wall-e.dae</code>...
 		</p>
 		<figure style="margin: 0;">
-				<img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px;"/>
+				<img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 100%; height: auto;"/>
 		</figure>
 		<p>
 			and we see that now the BVH construction time dwarfs our rendering time by an order of magnitude.

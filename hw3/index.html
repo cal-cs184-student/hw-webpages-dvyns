@@ -199,7 +199,7 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
 		</div>
 		<p>
 			As can be seen in the above screenshots, some regions on the higher poly meshes have weird artifacting when rendered.
-			It turns out there was an error in our implementation of the <code>Triangle:intersect()</code>/<code>Triangle::has_intersection()</code> functions that didn't rear its head until we could rear Max Planck's head.
+			It turns out there was an error in our implementation of the <code>Triangle:intersect()</code> and <code>Triangle::has_intersection()</code> functions that didn't rear its head until we could rear Max Planck's head.
 			We initially thought this was a problem with our BVH construction, but waiting for a brute force rendering of Max Planck resulted in the same problems in the same spots.
 		</p>
 		<p>

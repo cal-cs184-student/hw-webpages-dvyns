@@ -1,410 +1,539 @@
 <html>
-	<head>
-		<script>
-			MathJax = {
-				tex: {
-					inlineMath: [['$', '$'], ['\\(', '\\)']],
-					displayMath: [['$$', '$$'], ['\\[', '\\]']]
-				},
-				chtml: { scale: 0.9 },
-				svg: { scale: 0.9 }
-			};
-		</script>
-		<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-		<style>
-			h1 {
-				text-align: center;
-			}
 
-			.container {
-				margin: 0 auto;
-				padding: 60px 20%;
-			}
+<head>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [
+                    ['$', '$'],
+                    ['\\(', '\\)']
+                ],
+                displayMath: [
+                    ['$$', '$$'],
+                    ['\\[', '\\]']
+                ]
+            },
+            chtml: {
+                scale: 0.9
+            },
+            svg: {
+                scale: 0.9
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        h1 {
+            text-align: center;
+        }
+        
+        .container {
+            margin: 0 auto;
+            padding: 60px 20%;
+        }
+        
+        figure {
+            text-align: center;
+        }
+        
+        img {
+            display: inline-block;
+            box-sizing: border-box;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        code,
+        pre {
+            font-size: 1em;
+        }
+    </style>
+</head>
 
-			figure {
-				text-align: center;
-			}
+<body>
+    <div class="container">
+        <h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
+        <div style="text-align: center;">Names: David Smith, Tunmise Akanle </div>
 
-			img {
-				display: inline-block;
-				box-sizing: border-box;
-				border: 1px solid #d0d0d0;
-				border-radius: 4px;
-			}
+        <br> Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-dvyns/">https://cal-cs184-student.github.io/hw-webpages-dvyns/</a>
+        <p>
+            Link to GitHub repository: <a href="https://github.com/cal-cs184-student/hw3-pathtracer-anyname">https://github.com/cal-cs184-student/hw3-pathtracer-anyname</a>
+        </p>
 
-			body {
-				font-family: 'Inter', sans-serif;
-			}
-
-			code, pre {
-				font-size: 1em;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="container">
-		<h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
-		<div style="text-align: center;">Names: David Smith, Tunmise Akanle </div>
-
-		<br>
-
-		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-dvyns/">https://cal-cs184-student.github.io/hw-webpages-dvyns/</a>
-		<p>
-		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/hw3-pathtracer-anyname">https://github.com/cal-cs184-student/hw3-pathtracer-anyname</a>
-		</p>
-
-		<!--
+        <!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
-		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+        <h2>Overview</h2>
+        Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
-		<h2>Part 1: Ray Generation and Scene Intersection</h2>
-		<h3>Ray Generation and Intersection</h3>
-		<p>
-			For each pixel, ideally we want the color to correspond to the integral of the radiance over that pixel.
-			To estimate this, we generate a number of sample rays that intersect that pixel's area and find the nearest object (or objects, if we encode transparency) each of those rays intersect.
-			This approach is motivated by Monte Carlo integration.
-			At each ray intersection, we estimate how much light is reflected into the camera from that point.
-			Summing this all up and normalizing gives us a decent estimate of the pixel color.
-		</p>
-		<p>
-			For this part we encode the basic logic for generating these rays and program some basic tests for intersection with primitives in the scene.
-			Because it is expensive the check for intersection with all primitives, we will later use a bounding boxes to limit how many of these tests we are doing.
-		</p>
+        <h2>Part 1: Ray Generation and Scene Intersection</h2>
+        <h3>Ray Generation and Intersection</h3>
+        <p>
+            For each pixel, ideally we want the color to correspond to the integral of the radiance over that pixel. To estimate this, we generate a number of sample rays that intersect that pixel's area and find the nearest object (or objects, if we encode transparency)
+            each of those rays intersect. This approach is motivated by Monte Carlo integration. At each ray intersection, we estimate how much light is reflected into the camera from that point. Summing this all up and normalizing gives us a decent estimate
+            of the pixel color.
+        </p>
+        <p>
+            For this part we encode the basic logic for generating these rays and program some basic tests for intersection with primitives in the scene. Because it is expensive the check for intersection with all primitives, we will later use a bounding boxes to
+            limit how many of these tests we are doing.
+        </p>
 
-		<h3> Task 1: Generating Camera Rays</h3>
-		<p> 
-			In this part we note that the input \((x, y)\in [0, 1]\times[0,1]\) and we want the \(x\) and \(y\) components of the output \((x_c, y_c)\) in camera space to be in the range 
-			\[(x_c, y_c) \in \left[-\tan\left(\frac{hFov}{2}\right), \tan\left(\frac{hFov}{2}\right)\right]\times \left[-\tan\left(\frac{vFov}{2}\right), \tan\left(\frac{vFov}{2}\right)\right]\].
-			So construct a mappig that will take 0 to \(-\tan\left(\frac{hFov}{2}\right)\) and 1 to \(\tan\left(\frac{hFov}{2}\right)\) for the \(x\) component, and similarly for the \(y\) component linearly interpolating for points in between.
-			We write this as:
-		</p>
-		<pre><code>cam_space_x = 2.0 * (x - 0.5) * tan(radians(this->hFov) / 2.0)
+        <h3> Task 1: Generating Camera Rays</h3>
+        <p>
+            In this part we note that the input \((x, y)\in [0, 1]\times[0,1]\) and we want the \(x\) and \(y\) components of the output \((x_c, y_c)\) in camera space to be in the range \[(x_c, y_c) \in \left[-\tan\left(\frac{hFov}{2}\right), \tan\left(\frac{hFov}{2}\right)\right]\times
+            \left[-\tan\left(\frac{vFov}{2}\right), \tan\left(\frac{vFov}{2}\right)\right]\]. So construct a mappig that will take 0 to \(-\tan\left(\frac{hFov}{2}\right)\) and 1 to \(\tan\left(\frac{hFov}{2}\right)\) for the \(x\) component, and similarly
+            for the \(y\) component linearly interpolating for points in between. We write this as:
+        </p>
+        <pre><code>cam_space_x = 2.0 * (x - 0.5) * tan(radians(this->hFov) / 2.0)
 cam_space_y = 2.0 * (y - 0.5) * tan(radians(this->vFov) / 2.0)
 </code></pre>
-		<p>
-			We place these points in the plane at $z=-1$ as a <code>Vector3D</code> object. 
-			Then we multiply this vector by the <code>c2w</code> transformation matrix to get the final ray direction, normalize it to unit length, and assign this direction, position, <code>min_t</code>, and <code>max_t</code> to the returned ray.
-		</p>
+        <p>
+            We place these points in the plane at $z=-1$ as a <code>Vector3D</code> object. Then we multiply this vector by the <code>c2w</code> transformation matrix to get the final ray direction, normalize it to unit length, and assign this direction,
+            position, <code>min_t</code>, and <code>max_t</code> to the returned ray.
+        </p>
 
-		<h3>Task 2: Generating Pixel Samples</h3>
+        <h3>Task 2: Generating Pixel Samples</h3>
 
-		<p>
-			We loop through <code>nsaa</code> sampling from <code>GridUniformSampler2D()</code> at each point.
-			Each sample, which is between 0 and 1 in both directions, is added to the position $(x, y)$ to get the location within the corresponding pixel.
-			We then normalize by the buffer width in the $x$ direction and buffer height in the $y$ direction so that $x+x_{sample}$ and $y+y_{sample}$ are normalized.
-		</p>
-		<p>
-			This normalized sample is then passed into the generate ray function from Task 1.
-			The resulting ray from <code>camera->generate_ray()</code> is passed into <code>est_global_radiance()</code>.
-			We accumulate these estimated radiances and normalize by <code>nsaa</code>. 
-			We then update the pixel color with this accumulation.
-		</p>
+        <p>
+            We loop through <code>nsaa</code> sampling from <code>GridUniformSampler2D()</code> at each point. Each sample, which is between 0 and 1 in both directions, is added to the position $(x, y)$ to get the location within the corresponding pixel.
+            We then normalize by the buffer width in the $x$ direction and buffer height in the $y$ direction so that $x+x_{sample}$ and $y+y_{sample}$ are normalized.
+        </p>
+        <p>
+            This normalized sample is then passed into the generate ray function from Task 1. The resulting ray from <code>camera->generate_ray()</code> is passed into <code>est_global_radiance()</code>. We accumulate these estimated radiances and normalize
+            by <code>nsaa</code>. We then update the pixel color with this accumulation.
+        </p>
 
-		<h3>Task 3: Ray Triangle Intersection</h3>
-		<p>
-			For this task, we implemented the Möller-Trumbore algorithm as described in the ray-tracing slides.
-			Instead of directly doing the scalar multiplication
-			\[
-				\frac{1}{S_1\cdot E_1}\begin{bmatrix} S_2\cdot E_2 \\ S_1\cdot S \\ S_2\cdot D\end{bmatrix}
-			\]
-			with vectors, we calculated each point separately, since each element of the resulting vector has a separate condition necessary for intersection.
-			Doing this saves computation when earlier checks fail.
-		</p>
-		<p>
-			$t = S_2\cdot E_2 / (S_1\cdot E_1)$: The time of intersection $t$ must be in between <code>r.min_t</code> and <code>r.max_t</code>. If it isn't we return <code>false</code>.
-		</p>
-		<p>
-			$b_1 = S_1\cdot S / (S_1\cdot E_1)$: The barycentric coordinate $b_1$ must be in the range $[0, 1]$. Otherwise the point lies outside the trieangle and we return <code>false</code>.
-		</p>
-		<p>
-			$b_2 = S_2\cdot D / (S_1\cdot E_1)$: The sum of barycentric coordinates $b_1 + b_2$ must be in the range $[0, 1]$. 
-			Otherwise the point lies outside the triangle, and we return <code>false</code>.
-		</p>
-		<p>
-			If all of these conditions are met, than the given ray intersects the interior of the current triangle at time $t$. 
-			In <code>Triangle::has_intersection()</code> we are done.
-			For <code>Triangle::intersect()</code> we still need to assign values to the intersection object:
-			<pre><code>isect->t = t;
+        <h3>Task 3: Ray Triangle Intersection</h3>
+        <p>
+            For this task, we implemented the Möller-Trumbore algorithm as described in the ray-tracing slides. Instead of directly doing the scalar multiplication \[ \frac{1}{S_1\cdot E_1}\begin{bmatrix} S_2\cdot E_2 \\ S_1\cdot S \\ S_2\cdot D\end{bmatrix} \] with
+            vectors, we calculated each point separately, since each element of the resulting vector has a separate condition necessary for intersection. Doing this saves computation when earlier checks fail.
+        </p>
+        <p>
+            $t = S_2\cdot E_2 / (S_1\cdot E_1)$: The time of intersection $t$ must be in between <code>r.min_t</code> and <code>r.max_t</code>. If it isn't we return <code>false</code>.
+        </p>
+        <p>
+            $b_1 = S_1\cdot S / (S_1\cdot E_1)$: The barycentric coordinate $b_1$ must be in the range $[0, 1]$. Otherwise the point lies outside the trieangle and we return <code>false</code>.
+        </p>
+        <p>
+            $b_2 = S_2\cdot D / (S_1\cdot E_1)$: The sum of barycentric coordinates $b_1 + b_2$ must be in the range $[0, 1]$. Otherwise the point lies outside the triangle, and we return <code>false</code>.
+        </p>
+        <p>
+            If all of these conditions are met, than the given ray intersects the interior of the current triangle at time $t$. In <code>Triangle::has_intersection()</code> we are done. For <code>Triangle::intersect()</code> we still need to assign values
+            to the intersection object:
+            <pre><code>isect->t = t;
 isect->n = ((1 - b_1 - b_2) * n1 + b_1 * n2 + b_2 * n3).unit();
 isect->primative = this;
 isect->bsdf = this->get_bsdf();
-</code></pre>
-			Then we need to update <code>r.max_t = t</code>. (We forgot to do this and the banana looked all messed up.)
-		</p>
-		<h3>Task 4: Ray-Sphere Intersection</h3>
-		<p>
-			For this task, we used the method shown in lecture to test for ray intersections with sphere primitives.
-			The bulk of this is done in the <code>Sphere::test()</code> function, which is called by <code>Sphere:has_intersection()</code> and <code>Sphere::intersect()</code>.
-		</p>
-		<p>
-			<code>Sphere::test()</code>returns <code>false</code>> if there is no intersection and <code>true</code> otherwise.
-			These are found by solving the quadratic formula with the following coefficients from the ray-tracing slides:
-<pre><code>const double a = dot(r.d, r.d);
+</code></pre> Then we need to update <code>r.max_t = t</code>. (We forgot to do this and the banana looked all messed up.)
+        </p>
+        <h3>Task 4: Ray-Sphere Intersection</h3>
+        <p>
+            For this task, we used the method shown in lecture to test for ray intersections with sphere primitives. The bulk of this is done in the <code>Sphere::test()</code> function, which is called by <code>Sphere:has_intersection()</code> and <code>Sphere::intersect()</code>.
+        </p>
+        <p>
+            <code>Sphere::test()</code>returns <code>false</code>> if there is no intersection and <code>true</code> otherwise. These are found by solving the quadratic formula with the following coefficients from the ray-tracing slides:
+            <pre><code>const double a = dot(r.d, r.d);
 const double b = 2 * dot(r.d, r.o - o);
 const double c = dot(r.o - o, r.o - o) - this->r * this->r;
-</code></pre>
-			We know there are no solutions if the discrimant is negative, so we return false if it is.
-			Otherwise we assign the intersection times to <code>t1</code> and <code>t2</code> where <code>t1</code> is the smaller value.
-			We update <code>r.max_t</code> to the smallest intersection time between <code>r.min_t</code> and <code>r.max_t</code> if it exists.
-		</p>
-		<p>
-			Like in Task 3, <code>Sphere::has_intersection()</code> is done here. 
-			To finish <code>Sphere::intersect()</code>, assign <code>t</code>, <code>primitive</code>, and <code>bsdf</code> to their expected values.
-			The normal at the intersection point on the sphere is just the difference between the intersection point on the surface of the sphere (<code>r.o+t * r.d</code>) and the origin of the sphere.
-			So we assign 
-			<pre><code>isect->n = (r.o + t * r.d - this->o).unit();</code></pre>
-		</p>
+</code></pre> We know there are no solutions if the discrimant is negative, so we return false if it is. Otherwise we assign the intersection times to <code>t1</code> and <code>t2</code> where <code>t1</code> is the smaller value. We update
+            <code>r.max_t</code> to the smallest intersection time between <code>r.min_t</code> and <code>r.max_t</code> if it exists.
+        </p>
+        <p>
+            Like in Task 3, <code>Sphere::has_intersection()</code> is done here. To finish <code>Sphere::intersect()</code>, assign <code>t</code>, <code>primitive</code>, and <code>bsdf</code> to their expected values. The normal at the intersection
+            point on the sphere is just the difference between the intersection point on the surface of the sphere (<code>r.o+t * r.d</code>) and the origin of the sphere. So we assign
+            <pre><code>isect->n = (r.o + t * r.d - this->o).unit();</code></pre>
+        </p>
 
-		<h3>Some rendered .dae files:</h3>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cube_screenshot_3-17_12-27-41.png" style="width: 100%;"/>
-				  <figcaption>Cube</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="teapot_screenshot_3-17_12-24-19.png" style="width: 100%;"/>
-				  <figcaption>Teapot</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="banana_screenshot_3-17_12-22-57.png" style="width: 100%;"/>
-				  <figcaption>Banana</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="CBbunny_screenshot_3-17_12-26-29.png" style="width: 100%;"/>
-				  <figcaption>Bunny</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
-		<h3>Oh no...</h3>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="CBlucy_screenshot_screwed up.png" style="width: 100%;"/>
-				</td>
-				<td style="text-align: center;">
-				  <img src="maxplanck_screwed.png" style="width: 100%;"/>
-				</td>
-			  </tr>
-			</table>
-		</div>
-		<p>
-			As can be seen in the above screenshots, some regions on the higher poly meshes have weird artifacting when rendered.
-			It turns out there was an error in our implementation of the <code>Triangle:intersect()</code> and <code>Triangle::has_intersection()</code> functions that didn't rear its head until we could rear Max Planck's head.
-			We initially thought this was a problem with our BVH construction, but waiting for a brute force rendering of Max Planck resulted in the same problems in the same spots.
-		</p>
-		<p>
-			So we took to inspecting the BVH mesh around Max Planck's particularly problematic nose:
-		</p>
-			<img src="maxnose.png" style="width: 50%; margin: 0 auto; display: block;"/>
-		<p>
-			It seemed like problem regions are areas with very dense/small triangle meshes.
-			That suggested that there could be some numerical issues with our edge testing.
-			This would make sense since we were doing our barycentric coordinate checks <i>after</i> dividing by $S_1\cdot E_1$.
-		</p>
-		<p>
-			We then changed the logic to do the same checks, but multiplying both sides of the inequalities by $S_1\cdot E_1$ (<code>denom</code>).
-			This seemed to resolve our problem. 
-		</p>
-		<p>
-			We also tried switching from <code>float</code> operations to <code>double</code> operations, which seemed to have no noticeable impact on artifacting.
-			But it also seemed to have no noticeable impact on performance, so we kept it.
-		</p>
-		<h3>Max Planck after nose job:</h3>
-		<img src="maxnosejob.png" style="display: block; margin: 0 auto; width: 70%;"/>
-		
-		<h2>Part 2: Bounding Volume Hierarchy</h2>
-		<p>
-			For constructing our bounding volume hierarchy, we used an exhaustive surface area heuristic.
-			First we check to make sure that we have more than <code>max_leaf_size</code> primitives in our current node. 
-			If not, this is a leaf and we return the current node. 
-			Otherwise we move on to constructing partitions.
-		</p>
-			There, on each axis, we first sort all primitves into a vector ordered by their centroids axis position.
-			Then we construct splits for each point along each axis into two vectors. For the <code>first_half</code> vector, we have:
-			<pre><code>std::vector<BBox> first_half(n);
+        <h3>Some rendered .dae files:</h3>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="cube_screenshot_3-17_12-27-41.png" style="width: 100%;" />
+                        <figcaption>Cube</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="teapot_screenshot_3-17_12-24-19.png" style="width: 100%;" />
+                        <figcaption>Teapot</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="banana_screenshot_3-17_12-22-57.png" style="width: 100%;" />
+                        <figcaption>Banana</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="CBbunny_screenshot_3-17_12-26-29.png" style="width: 100%;" />
+                        <figcaption>Bunny</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <h3>Oh no...</h3>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="CBlucy_screenshot_screwed up.png" style="width: 100%;" />
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="maxplanck_screwed.png" style="width: 100%;" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            As can be seen in the above screenshots, some regions on the higher poly meshes have weird artifacting when rendered. It turns out there was an error in our implementation of the <code>Triangle:intersect()</code> and <code>Triangle::has_intersection()</code>            functions that didn't rear its head until we could rear Max Planck's head. We initially thought this was a problem with our BVH construction, but waiting for a brute force rendering of Max Planck resulted in the same problems in the same spots.
+        </p>
+        <p>
+            So we took to inspecting the BVH mesh around Max Planck's particularly problematic nose:
+        </p>
+        <img src="maxnose.png" style="width: 50%; margin: 0 auto; display: block;" />
+        <p>
+            It seemed like problem regions are areas with very dense/small triangle meshes. That suggested that there could be some numerical issues with our edge testing. This would make sense since we were doing our barycentric coordinate checks <i>after</i>            dividing by $S_1\cdot E_1$.
+        </p>
+        <p>
+            We then changed the logic to do the same checks, but multiplying both sides of the inequalities by $S_1\cdot E_1$ (<code>denom</code>). This seemed to resolve our problem.
+        </p>
+        <p>
+            We also tried switching from <code>float</code> operations to <code>double</code> operations, which seemed to have no noticeable impact on artifacting. But it also seemed to have no noticeable impact on performance, so we kept it.
+        </p>
+        <h3>Max Planck after nose job:</h3>
+        <img src="maxnosejob.png" style="display: block; margin: 0 auto; width: 70%;" />
+
+        <h2>Part 2: Bounding Volume Hierarchy</h2>
+        <p>
+            For constructing our bounding volume hierarchy, we used an exhaustive surface area heuristic. First we check to make sure that we have more than <code>max_leaf_size</code> primitives in our current node. If not, this is a leaf and we return
+            the current node. Otherwise we move on to constructing partitions.
+        </p>
+        There, on each axis, we first sort all primitves into a vector ordered by their centroids axis position. Then we construct splits for each point along each axis into two vectors. For the <code>first_half</code> vector, we have:
+        <pre><code>std::vector<BBox> first_half(n);
     first_half[0] = sorted[0]->get_bbox();
     for (size_t i = 1; i < n; i++) {
       first_half[i] = first_half[i - 1];
       first_half[i].expand(sorted[i]->get_bbox());
-    }</code></pre>
-			This chooses the furthest "left" primitive, gets its bounding box, and successively expands it for each additional point.
-			The <code>second_half</code> vector does the same in reverse, starting from the furthest "right" primitive.
-			These definitions mean that the set of primitives contained in the union of <code>first_half[split-1]</code> and <code>second_half[split]</code> is mutually disjoint and contains all primitives, as desired from a split.
-			
-		<p> 
-			We keep track of the best split and best axis based on the cost function
-			<pre><code>double cost = C_trav + (first_half[split - 1].surface_area() * split + 
+    }</code></pre> This chooses the furthest "left" primitive, gets its bounding box, and successively expands it for each additional point. The <code>second_half</code> vector does the same in reverse, starting from the furthest "right" primitive.
+        These definitions mean that the set of primitives contained in the union of <code>first_half[split-1]</code> and <code>second_half[split]</code> is mutually disjoint and contains all primitives, as desired from a split.
+
+        <p>
+            We keep track of the best split and best axis based on the cost function
+            <pre><code>double cost = C_trav + (first_half[split - 1].surface_area() * split + 
                         second_half[split].surface_area() * (n - split)) / 
 			bbox.surface_area();
-</code></pre>
-			where <code>C_trav = 0.125</code>, the estimated traversal cost from lecture. 
-			To clarify, <code>split</code> is an iterator over the sorted vector of primitives whose position determines the split point.
-		</p>
+</code></pre> where <code>C_trav = 0.125</code>, the estimated traversal cost from lecture. To clarify, <code>split</code> is an iterator over the sorted vector of primitives whose position determines the split point.
+        </p>
 
-		<p>
-			All of this is done on a copy of the vector of primitives with sorting handled by <code>std::sort()</code>.
-			We check that <code>best_cost</code> is less than number of primitives $n$, the estimated relative cost of iterating through all primitives in the node.
-			If it is greater than $n$ we estimate a leaf to be more efficient than any split and return the node.
-		</p>
-		<p>
-			Otherwise, we sort the real vector of primitives (calling <code>std::sort()</code> directly on <code>start</code> and <code>end</code>) along the <code>best_axis</code> in order of centroid position on that axis.
-			Then we recurse on both splits (using the convention that <code>end</code> is exclusive):
-			<pre><code>auto mid = start + best_split;
+        <p>
+            All of this is done on a copy of the vector of primitives with sorting handled by <code>std::sort()</code>. We check that <code>best_cost</code> is less than number of primitives $n$, the estimated relative cost of iterating through all primitives
+            in the node. If it is greater than $n$ we estimate a leaf to be more efficient than any split and return the node.
+        </p>
+        <p>
+            Otherwise, we sort the real vector of primitives (calling <code>std::sort()</code> directly on <code>start</code> and <code>end</code>) along the <code>best_axis</code> in order of centroid position on that axis. Then we recurse on both splits
+            (using the convention that <code>end</code> is exclusive):
+            <pre><code>auto mid = start + best_split;
 node->l = construct_bvh(start, mid, max_leaf_size);
 node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
-		</p>
-		<p>
-			The function returns the current node.
-		</p>
-		<p>
-			Our intersection algorithms work pretty much as would be expected.
-			For the bounding box, we check each of the $x,y,z$ planes and use the minimum time intersection if there is one.
-			We iterate through the BVH in the same way you would a recursive tree traversal. 
-			The <code>has_intersection</code> function stops uses a logic shortcut to avoid doing unnecessary work.
-		</p>
+        </p>
+        <p>
+            The function returns the current node.
+        </p>
+        <p>
+            Our intersection algorithms work pretty much as would be expected. For the bounding box, we check each of the $x,y,z$ planes and use the minimum time intersection if there is one. We iterate through the BVH in the same way you would a recursive tree traversal.
+            The <code>has_intersection</code> function stops uses a logic shortcut to avoid doing unnecessary work.
+        </p>
 
-		<h3>BVH Scene Renders</h3>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-				<tr>
-					<td style="text-align: center; padding: 12px;">
-						<img src="wall-e_screenshot_3-18_14-30-1.png" alt="Wall-E render screenshot" style="width: 100%;"/>
-						<figcaption>Wall-E</figcaption>
-					</td>
-					<td style="text-align: center; padding: 12px;">
-						<img src="blob_screenshot_3-18_14-30-19.png" alt="Blob render screenshot" style="width: 100%;"/>
-						<figcaption>Blob</figcaption>
-					</td>
-				</tr>
-				<tr>
-					<td style="text-align: center; padding: 12px;">
-						<img src="CBlucy_screenshot_3-18_15-30-45.png" alt="Lucy render screenshot" style="width: 100%;"/>
-						<figcaption>Lucy</figcaption>
-					</td>
-					<td style="text-align: center; padding: 12px;">
-						<img src="dragon_screenshot_3-18_14-30-55.png" alt="Dragon render screenshot" style="width: 100%;"/>
-						<figcaption>Dragon</figcaption>
-					</td>
-				</tr>
-			</table>
-		</div>
+        <h3>BVH Scene Renders</h3>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="wall-e_screenshot_3-18_14-30-1.png" alt="Wall-E render screenshot" style="width: 100%;" />
+                        <figcaption>Wall-E</figcaption>
+                    </td>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="blob_screenshot_3-18_14-30-19.png" alt="Blob render screenshot" style="width: 100%;" />
+                        <figcaption>Blob</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="CBlucy_screenshot_3-18_15-30-45.png" alt="Lucy render screenshot" style="width: 100%;" />
+                        <figcaption>Lucy</figcaption>
+                    </td>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="dragon_screenshot_3-18_14-30-55.png" alt="Dragon render screenshot" style="width: 100%;" />
+                        <figcaption>Dragon</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
-		<h3>Naive vs. BVH Timing Comparison</h3>
-		<div style="position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, 95vw); margin: 24px 0;">
-			<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-				<tr>
-					<th style="width: 130px; padding: 10px 12px; text-align: left;">Scene</th>
-					<th style="padding: 10px 12px; text-align: center;">Naive</th>
-					<th style="padding: 10px 12px; text-align: center;">With BVH</th>
-				</tr>
-				<tr>
-					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 75.8627 s</figcaption>
-						</figure>
-					</td>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 0.1238 s</figcaption>
-						</figure>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 36.7396 s</figcaption>
-						</figure>
-					</td>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 0.0836 s</figcaption>
-						</figure>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 1.7434 s</figcaption>
-						</figure>
-					</td>
-					<td style="padding: 12px; vertical-align: top;">
-						<figure style="margin: 0;">
-							<img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto;"/>
-							<figcaption style="margin-top: 8px;">Render time: 0.0745 s</figcaption>
-						</figure>
-					</td>
-				</tr>
-			</table>
-		</div>
-		<p>
-			The performance gains of our BVH scale with the size/density of the meshes.
-			Max Planck, which is the most complex scene, shows the most significant improvement.
-			This is expected, since tree searching is roughly $O(\log n)$, where $n$ is the number of primitives whereas the naive approach is approximately $O(n)$.
-			There are some edge cases to this, but our performance improvement should approach that asymptotic behavior as the mesh gets large enough.
-		</p><p>
-			The other significant point to note, however, is that the BVH construction time also scales with mesh size.
-			The BVH construction times are not that noticeable with these meshes, but when rendering something like <code>wall-e.dae</code>...
-		</p>
-		<figure style="margin: 0;">
-				<img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 50%; height: auto; margin: 0 auto"/>
-		</figure>
-		<p>
-			and we see that the BVH construction time dwarfs our rendering time by an order of magnitude!
-		</p>
-		<p>
-			Assume a reasonably well balanced tree, which should be a reasonable assumption in this case. 
-			Then, for the construction time, we have the recurrence relation
-			\[ T(n) = 2T(n/2) + O(n\log n) \implies T(n) = O(n\log^2 n). \]
-			(This is because runtime is dominated by the $O(n\log n)$ sorting at each level).
-		</p>
-		<p>
-			If we instead used a bucketed approach, like in PBRT, we would only need to partition the primitives: this is an $O(n)$ operation. 
-			Hence, from the recurrence, we would get an asymptotic bound $T(n)=O(n\log n)$. 
-			This is significantly better, and suggests we would probably be better off using a bucketed approach. 
-		</p><p>
-			We will discuss tradeoffs of these approaches alongside a further discussion on BVH heuristics in the extra credit section.
-		</p>
+        <h3>Naive vs. BVH Timing Comparison</h3>
+        <div style="position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, 95vw); margin: 24px 0;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                <tr>
+                    <th style="width: 130px; padding: 10px 12px; text-align: left;">Scene</th>
+                    <th style="padding: 10px 12px; text-align: center;">Naive</th>
+                    <th style="padding: 10px 12px; text-align: center;">With BVH</th>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 75.8627 s</figcaption>
+                        </figure>
+                    </td>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 0.1238 s</figcaption>
+                        </figure>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 36.7396 s</figcaption>
+                        </figure>
+                    </td>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 0.0836 s</figcaption>
+                        </figure>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 1.7434 s</figcaption>
+                        </figure>
+                    </td>
+                    <td style="padding: 12px; vertical-align: top;">
+                        <figure style="margin: 0;">
+                            <img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
+                            <figcaption style="margin-top: 8px;">Render time: 0.0745 s</figcaption>
+                        </figure>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            The performance gains of our BVH scale with the size/density of the meshes. Max Planck, which is the most complex scene, shows the most significant improvement. This is expected, since tree searching is roughly $O(\log n)$, where $n$ is the number of
+            primitives whereas the naive approach is approximately $O(n)$. There are some edge cases to this, but our performance improvement should approach that asymptotic behavior as the mesh gets large enough.
+        </p>
+        <p>
+            The other significant point to note, however, is that the BVH construction time also scales with mesh size. The BVH construction times are not that noticeable with these meshes, but when rendering something like <code>wall-e.dae</code>...
+        </p>
+        <figure style="margin: 0;">
+            <img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 50%; height: auto; margin: 0 auto" />
+        </figure>
+        <p>
+            and we see that the BVH construction time dwarfs our rendering time by an order of magnitude!
+        </p>
+        <p>
+            Assume a reasonably well balanced tree, which should be a reasonable assumption in this case. Then, for the construction time, we have the recurrence relation \[ T(n) = 2T(n/2) + O(n\log n) \implies T(n) = O(n\log^2 n). \] (This is because runtime is
+            dominated by the $O(n\log n)$ sorting at each level).
+        </p>
+        <p>
+            If we instead used a bucketed approach, like in PBRT, we would only need to partition the primitives: this is an $O(n)$ operation. Hence, from the recurrence, we would get an asymptotic bound $T(n)=O(n\log n)$. This is significantly better, and suggests
+            we would probably be better off using a bucketed approach.
+        </p>
+        <p>
+            We will discuss tradeoffs of these approaches alongside a further discussion on BVH heuristics in the extra credit section.
+        </p>
 
-		<h2>Part 3: Direct Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h2>Part 3: Direct Illumination</h2>
+        <h2>Uniform Hemisphere Sampling (estimate_direct_lighting_hemisphere)</h2>
 
-		<h2>Part 4: Global Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-		<h2>Part 5: Adaptive Sampling</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-		<h2>(Optional) Part 6: Extra Credit Opportunities</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
-		</div>
-	</body>
+        <p>
+            To estimate direct lighting using uniform hemisphere sampling, we sample
+            <code>num_samples = scene-&gt;lights.size() * ns_area_light</code> random directions uniformly over the hemisphere at the hit point. For each sample:
+        </p>
+
+        <ul>
+            <li>Sample a random direction <code>wi</code> in object space using <code>hemisphereSampler-&gt;get_sample()</code></li>
+            <li>Transform <code>wi</code> to world space using the <code>o2w</code> matrix</li>
+            <li>Cast a shadow ray from <code>hit_p</code> in that direction with <code>min_t = EPS_F</code> to avoid self-intersection</li>
+            <li>If the shadow ray intersects an emissive surface, retrieve its emission via <code>get_emission()</code></li>
+            <li>Accumulate the contribution:
+                <code>f(w_out, wi) * emission * cos(theta) / pdf</code>
+            </li>
+        </ul>
+
+        <p>
+            Since we sample uniformly, <code>pdf = 1/(2π)</code>, so we multiply by <code>2π</code>.
+            <br>
+            <code>cos(theta) = wi.z</code> since z is "up" in object space.
+        </p>
+
+        <p>
+            Average over all samples by dividing by <code>num_samples</code>.
+        </p>
+
+        <h2>Importance Sampling (estimate_direct_lighting_importance)</h2>
+        <p>
+            Instead of sampling random directions, we sample directly toward each light source:
+        </p>
+
+        <ul>
+            <li>Loop over every light in the scene</li>
+            <li>For delta lights (point lights), take 1 sample; for area lights, take <code>ns_area_light</code> samples</li>
+            <li>
+                For each sample, call
+                <code>light-&gt;sample_L(hit_p, &amp;wi_world, &amp;dist, &amp;pdf)</code> to get:
+                <ul>
+                    <li>A direction toward the light <code>wi_world</code></li>
+                    <li>The distance to the light <code>dist</code></li>
+                    <li>The probability density <code>pdf</code></li>
+                </ul>
+            </li>
+            <li>Transform <code>wi_world</code> to object space and skip if <code>wi.z &lt; 0</code> (light behind surface)</li>
+            <li>Cast a shadow ray with <code>max_t = dist - EPS_F</code> — if nothing blocks it, the light is visible</li>
+            <li>
+                Accumulate:
+                <code>f(w_out, wi_obj) * radiance * cos(theta) / pdf</code>
+            </li>
+        </ul>
+
+        <p>
+            Average each light's contribution over its samples, then sum across all lights.
+        </p>
+
+        <h3>Key Difference</h3>
+        <p>
+            Hemisphere sampling wastes most samples on directions that don't hit any light, while importance sampling guarantees every sample contributes useful lighting information by sampling directly toward lights.
+        </p>
+
+        <table>
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="bunny_hemisphere.png" alt="bunny_hemisphere screenshot" style="width: 100%;" />
+                    <figcaption>Bunny hemispere</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="bunny_importance.png" alt="bunny importance screenshot" style="width: 100%;" />
+                    <figcaption>Bunny importance</figcaption>
+                </td>
+            </tr>
+
+        </table>
+
+        <h3>Render importance sampling with difference noice level </h3>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="bunny_l1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 1 Sample pixel</figcaption>
+                    </td>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="bunny_l4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 4 sample pixel</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="bunny_l16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 16 sample Pixel</figcaption>
+                    </td>
+                    <td style="text-align: center; padding: 12px;">
+                        <img src="bunny_l64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 64 sample pixel</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <h2>Noise Level Comparison: Varying Light Rays (-l flag) with 1 Sample Per Pixel</h2>
+
+        <p><strong>Scene:</strong> <code>CBbunny.dae</code> with importance sampling (<code>-s 1</code>, <code>-m 3</code>)</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Light Rays</th>
+                    <th>Observation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>-l 1</code></td>
+                    <td>Extremely noisy, heavy black/white speckles everywhere, soft shadows nearly unrecognizable</td>
+                </tr>
+                <tr>
+                    <td><code>-l 4</code></td>
+                    <td>Still very noisy but bunny shape more visible, shadows slightly softer</td>
+                </tr>
+                <tr>
+                    <td><code>-l 16</code></td>
+                    <td>Noticeably cleaner, soft shadows beginning to form under the bunny</td>
+                </tr>
+                <tr>
+                    <td><code>-l 64</code></td>
+                    <td>Much smoother, soft shadows clearly visible, significantly less noise though still grainy due to <code>-s 1</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight">
+            <p>
+                With only 1 sample per pixel (<code>-s 1</code>), increasing the number of light rays (<code>-l</code>) has a dramatic effect on noise reduction in soft shadows. At <code>-l 1</code>, the render is extremely noisy with harsh black and
+                white speckles, making it difficult to distinguish soft shadow boundaries. As the number of light samples increases to 4 and 16, the soft shadows under the bunny become progressively smoother and more defined. At <code>-l 64</code>, the
+                shadows are noticeably cleaner, though some noise remains due to the single pixel sample.
+            </p>
+            <p>
+                This demonstrates that more light samples per intersection point directly reduces variance in shadow regions, since each additional sample better approximates the integral over the area light.
+            </p>
+        </div>
+        <h2>Noise Level Comparison: Hemisphere vs. Importance Sampling </h2>
+        <p class="highlight">
+            Uniform hemisphere sampling and importance sampling produce noticeably different results for the same scene and sample count. With hemisphere sampling, the render is significantly noisier, the walls, floor, and bunny surface all exhibit heavy grainy speckles
+            because most sampled directions miss the light source entirely, contributing nothing to the estimate. The soft shadows are poorly defined and the overall image appears darker and less converged. Importance sampling, by contrast, produces a
+            much cleaner render with the same settings soft shadows under the bunny are smooth and well-defined, color bleeding from the red and blue walls is more accurate, and the overall lighting looks physically correct. This difference arises because
+            importance sampling guarantees every shadow ray is cast toward a light source, making each sample maximally informative, whereas hemisphere sampling wastes the vast majority of samples on directions that carry no direct lighting contribution.
+            In short, importance sampling achieves the same visual quality as hemisphere sampling with far fewer samples, making it the clearly superior method for direct lighting estimation in scenes with small area lights.
+        </p>
+
+
+
+
+
+        <h2>Part 4: Global Illumination</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        <h2>Part 5: Adaptive Sampling</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        <h2>(Optional) Part 6: Extra Credit Opportunities</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        <h2>Additional Notes (please remove)</h2>
+        <ul>
+            <li>You can also add code if you'd like as so: <code>code code code</code></li>
+            <li>If you'd like to add math equations,
+                <ul>
+                    <li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
+                    <li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</body>
+
 </html>

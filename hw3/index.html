@@ -425,7 +425,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                 </ul>
             </li>
             <li>Transform <code>wi_world</code> to object space and skip if <code>wi.z &lt; 0</code> (light behind surface)</li>
-            <li>Cast a shadow ray with <code>max_t = dist - EPS_F</code> — if nothing blocks it, the light is visible</li>
+            <li>Cast a shadow ray with <code>max_t = dist - EPS_F</code> if nothing blocks it, the light is visible</li>
             <li>
                 Accumulate:
                 <code>f(w_out, wi_obj) * radiance * cos(theta) / pdf</code>
@@ -537,142 +537,323 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         <h2>Part 4: Global Illumination</h2>
         <p>
             at_least_one_bounce_radiance recursively estimates indirect lighting. At each hit point, it first adds the direct lighting contribution via one_bounce_radiance (when accumulating bounces or at the first call). It then uses Russian Roulette with a continuation
-            probability of 0.7 to randomly decide whether to trace another bounce — this provides an unbiased way to terminate the recursion. If continuing, it calls sample_f to sample a new incoming direction using a cosine-weighted hemisphere distribution,
+            probability of 0.7 to randomly decide whether to trace another bounce, this provides an unbiased way to terminate the recursion. If continuing, it calls sample_f to sample a new incoming direction using a cosine-weighted hemisphere distribution,
             which returns the BSDF value, the sampled direction wi, and the pdf. A new ray is cast from the hit point in that direction with min_t = EPS_F to avoid self-intersection, and its depth is decremented by 1. If the new ray intersects the scene,
             at_least_one_bounce_radiance is called recursively on the new intersection. The indirect contribution is accumulated as f * L_indirect * cos(theta) / (pdf * continuation_probability) to maintain an unbiased estimate.
         </p>
+
+
+
+        <h3>global Illumination</h3>
+
         <table>
 
 
 
             <tr>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="bunny_direct_only.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
-                    <figcaption>Bunny Direct</figcaption>
+                    <img src="bunny_global_1024.png" style="width: 100%;" />
+                    <figcaption>Bunny global</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="bunny_direct_only.png" bunny_l64 render screenshot " style="width: 100%; " />
-                <figcaption>Bunny indirect</figcaption>
-            </td>
-        </tr>
-	</table>
-
-	<h1>Ray Bounce Comparison: m=2 vs m=3</h1>
-
-    <p>
-        Looking at the two rendered images (bunny_m2.png and bunny_m3.png), both show the Stanford Bunny inside a Cornell Box, a classic scene with a white ceiling light, a red left wall, and a blue/purple right wall. The difference between the two is the maximum ray bounce depth (m=2 vs m=3), and even subtle differences in shadow softness, color bleeding, and ambient fill reveal just how much each additional bounce contributes.
-    </p>
-
-    <div class="section ">
-        <h2>The 2nd Bounce of Light</h2>
-        <p>
-            The second bounce is where indirect illumination begins in earnest. After a ray from the camera hits the bunny and bounces once to a wall (1st bounce), the 2nd bounce carries that light back onto the scene geometry.
-        </p>
-        <ul>
-            <li><strong>Color bleeding:</strong> The red left wall and blue right wall cast their hues onto the bunny's sides and the floor beneath it. This is entirely a 2nd-bounce phenomenon, direct illumination alone (1 bounce) would render the bunny in flat, neutral white with hard shadows.</li>
-            <li><strong>Soft ambient fill:</strong> The underside of the bunny and the shadowed regions on the floor are no longer fully black. Light that bounced off the floor or walls fills these areas with a dim, warm glow.</li>
-            <li><strong>Ceiling illumination:</strong> The ceiling away from the light source picks up faint scattered light that first hit the walls, which then bounces up.</li>
-        </ul>
-    </div>
-
-    <div class="section ">
-        <h2>The 3rd Bounce of Light</h2>
-        <p>
-            The third bounce refines and deepens the realism:
-        </p>
-        <ul>
-            <li><strong>Deeper color bleeding:</strong> Red/blue hues penetrate further into the scene, the back wall and bunny's rear pick up more saturation because light has had an extra opportunity to scatter between surfaces.</li>
-            <li><strong>Softer shadow transitions:</strong> The contact shadow beneath the bunny transitions more gradually, as inter-reflected light fills the penumbra more completely.</li>
-            <li><strong>Brightening of occluded regions:</strong> Concave areas of the bunny (between the ears, the belly crease near the floor) appear slightly brighter than in the m=2 render, because multi-bounce light can "reach around " occluders more effectively.</li>
-            <li><strong>Energy conservation accuracy:</strong> Physically, light does bounce many times before being absorbed. Cutting off at m=2 loses a measurable portion of total scene radiance; m=3 recovers a meaningful fraction of that energy.</li>
-        </ul>
-    </div>
-
-    <div class="section ">
-        <h2>Why This Matters vs. Rasterization</h2>
-        <table>
-            <tr>
-                <th>Feature</th>
-                <th>Rasterization</th>
-                <th>Path Tracing (m ≥ 2)</th>
-            </tr>
-            <tr>
-                <td>Direct lighting</td>
-                <td>Fast, approximate</td>
-                <td>Accurate</td>
-            </tr>
-            <tr>
-                <td>Soft shadows</td>
-                <td>Requires shadow maps (aliased)</td>
-                <td>Naturally emerges from area light sampling</td>
-            </tr>
-            <tr>
-                <td>Color bleeding</td>
-                <td>Requires baked lightmaps or screen-space hacks</td>
-                <td>Physically accurate, automatic</td>
-            </tr>
-            <tr>
-                <td>Ambient light</td>
-                <td>Fake constant term (ambient occlusion at best)</td>
-                <td>Emerges from indirect bounces</td>
-            </tr>
-            <tr>
-                <td>Inter-reflections</td>
-                <td>Not possible without costly tricks</td>
-                <td>Free with additional bounces</td>
+                    <img src="CBbunny_global.png" style="width: 100%; " />
+                    <figcaption>CBunny global</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="spheres_global_1024.png" style="width: 100%; " />
+                    <figcaption>sphere global</figcaption>
+                </td>
             </tr>
         </table>
-    </div>
+        <table>
 
-<p>With 1024 samples per pixel, the Monte Carlo estimator has enough samples to converge the indirect illumination integrals with low variance — meaning the color bleeding and soft shadowing appear clean rather than noisy. At lower sample counts (e.g. 4 or 16 spp), the 2nd and 3rd bounce contributions would show high noise precisely in those subtle indirect regions, demonstrating that they are genuinely being computed stochastically rather than approximated.</p>
+
+
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_direct_only.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
+                    <figcaption>Bunny Direct</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_indirect_only.png" style="width: 100%; " />
+                    <figcaption>Bunny indirect</figcaption>
+                </td>
+            </tr>
+        </table>
+
+        <h1>Ray Bounce Comparison: m=2 vs m=3</h1>
+
+        <p>
+            Looking at the two rendered images (bunny_m2.png and bunny_m3.png), both show the Stanford Bunny inside a Cornell Box, a classic scene with a white ceiling light, a red left wall, and a blue/purple right wall. The difference between the two is the maximum
+            ray bounce depth (m=2 vs m=3), and even subtle differences in shadow softness, color bleeding, and ambient fill reveal just how much each additional bounce contributes.
+        </p>
+        <table>
+
+
+
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_m2.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
+                    <figcaption>Bunny m2</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_m3.png" alt=" render screenshot " style="width: 100%; " />
+                    <figcaption>Bunny m3</figcaption>
+                </td>
+            </tr>
+        </table>
+
+
+        <div class="section ">
+            <h2>The 2nd Bounce of Light</h2>
+            <p>
+                The second bounce is where indirect illumination begins in earnest. After a ray from the camera hits the bunny and bounces once to a wall (1st bounce), the 2nd bounce carries that light back onto the scene geometry.
+            </p>
+            <ul>
+                <li><strong>Color bleeding:</strong> The red left wall and blue right wall cast their hues onto the bunny's sides and the floor beneath it. This is entirely a 2nd-bounce phenomenon, direct illumination alone (1 bounce) would render the bunny
+                    in flat, neutral white with hard shadows.</li>
+                <li><strong>Soft ambient fill:</strong> The underside of the bunny and the shadowed regions on the floor are no longer fully black. Light that bounced off the floor or walls fills these areas with a dim, warm glow.</li>
+                <li><strong>Ceiling illumination:</strong> The ceiling away from the light source picks up faint scattered light that first hit the walls, which then bounces up.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>The 3rd Bounce of Light</h2>
+            <p>
+                The third bounce refines and deepens the realism:
+            </p>
+            <ul>
+                <li><strong>Deeper color bleeding:</strong> Red/blue hues penetrate further into the scene, the back wall and bunny's rear pick up more saturation because light has had an extra opportunity to scatter between surfaces.</li>
+                <li><strong>Softer shadow transitions:</strong> The contact shadow beneath the bunny transitions more gradually, as inter-reflected light fills the penumbra more completely.</li>
+                <li><strong>Brightening of occluded regions:</strong> Concave areas of the bunny (between the ears, the belly crease near the floor) appear slightly brighter than in the m=2 render, because multi-bounce light can "reach around " occluders
+                    more effectively.</li>
+                <li><strong>Energy conservation accuracy:</strong> Physically, light does bounce many times before being absorbed. Cutting off at m=2 loses a measurable portion of total scene radiance; m=3 recovers a meaningful fraction of that energy.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Why This Matters vs. Rasterization</h2>
+            <table>
+                <tr>
+                    <th>Feature</th>
+                    <th>Rasterization</th>
+                    <th>Path Tracing (m ≥ 2)</th>
+                </tr>
+                <tr>
+                    <td>Direct lighting</td>
+                    <td>Fast, approximate</td>
+                    <td>Accurate</td>
+                </tr>
+                <tr>
+                    <td>Soft shadows</td>
+                    <td>Requires shadow maps (aliased)</td>
+                    <td>Naturally emerges from area light sampling</td>
+                </tr>
+                <tr>
+                    <td>Color bleeding</td>
+                    <td>Requires baked lightmaps or screen-space hacks</td>
+                    <td>Physically accurate, automatic</td>
+                </tr>
+                <tr>
+                    <td>Ambient light</td>
+                    <td>Fake constant term (ambient occlusion at best)</td>
+                    <td>Emerges from indirect bounces</td>
+                </tr>
+                <tr>
+                    <td>Inter-reflections</td>
+                    <td>Not possible without costly tricks</td>
+                    <td>Free with additional bounces</td>
+                </tr>
+            </table>
+        </div>
+
+        <p>With 1024 samples per pixel, the Monte Carlo estimator has enough samples to converge the indirect illumination integrals with low variance, meaning the color bleeding and soft shadowing appear clean rather than noisy. At lower sample counts (e.g.
+            4 or 16 spp), the 2nd and 3rd bounce contributions would show high noise precisely in those subtle indirect regions, demonstrating that they are genuinely being computed stochastically rather than approximated.</p>
+
+        <table>
+
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m0.png " style="width: 100%; " />
+                    <figcaption>CBunny accumulated0</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m1.png" style="width: 100%; " />
+                    <figcaption>CBunny accumulated1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m2.png" style="width: 100%; " />
+                    <figcaption>CBunny accumulated2</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m3.png" style="width: 100%; " />
+                    <figcaption>CBunny accumulated3</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m4.png" style="width: 100%; " />
+                    <figcaption>CBunny accumulated4</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_accum_m5.png" style="width: 100%; " />
+                    <figcaption>CBunny accumulated5</figcaption>
+                </td>
+
+            </tr>
+        </table>
+
+
+        <table>
+
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m0.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated0</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m1.png " style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m2.png" style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated2</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m3.png" style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated3</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m4.png" style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated4</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_unaccum_m5.png" style="width: 100%; " />
+                    <figcaption>CBunny unaccumulated5</figcaption>
+                </td>
+
+            </tr>
+        </table>
+
+        <h2>Accumulated vs Unaccumulated Bounces</h2>
+
+        <p><strong>m=0:</strong> Both accumulated and unaccumulated show only the ceiling light. Nothing to accumulate yet, emission only.</p>
+
+        <p><strong>m=1:</strong> Both show only directly lit surfaces with hard black shadows and no color bleeding. Unaccumulated isolates just the direct light contribution; accumulated adds it on top of m=0 emission.</p>
+
+        <p><strong>m=2:</strong> The unaccumulated image is dim but reveals color bleeding for the first time, red and blue hues appear on the bunny's flanks from the walls, and shadowed areas receive faint fill. The accumulated image looks noticeably more
+            realistic than m=1, with soft shadows and visible color on the bunny. This is the biggest perceptual jump of any single bounce.</p>
+
+        <p><strong>m=3:</strong> The unaccumulated image is dimmer than m=2. Less energy survives each bounce,but fills in deeply occluded areas like the belly crease and between the ears. The accumulated image is subtly improved over m=2: contact shadows
+            soften further and the back wall brightens slightly.</p>
+
+        <p><strong>m=4:</strong> The unaccumulated image is nearly black with only faint uniform fill remaining. The accumulated image is almost indistinguishable from m=3, diminishing returns are clear.</p>
+
+        <p><strong>m=5:</strong> The unaccumulated image is essentially black. The accumulated image is perceptually identical to m=4. The scene has fully converged, additional bounces contribute negligible energy.</p>
+
+
+
+
+
+
+
+
+        <h2>Russian Roulette: m=0,1,2,3,4,100</h2>
+
+        <table>
+
+
+
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m0.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering0</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m1.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m2.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering2</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m3.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering 3</figcaption>
+                </td>
+
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m4.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering4</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="bunny_rr_m100.png" style="width: 100%; " />
+                    <figcaption>Russian Roulette rendering100</figcaption>
+                </td>
+            </tr>
+        </table>
+
+        <p><strong>m=0:</strong> Only the ceiling light is visible. No rays bounce, so no surface is illuminated.</p>
+
+        <p><strong>m=1:</strong> Direct illumination only. Hard black shadows, no color bleeding.</p>
+
+        <p><strong>m=2:</strong> First indirect bounce added. Color bleeding from red/blue walls appears on the bunny. Shadows begin to fill.</p>
+
+        <p><strong>m=3:</strong> Second indirect bounce. Deeper shadow fill, slightly more saturated color bleeding, occluded crevices brighten.</p>
+
+        <p><strong>m=4:</strong> Third indirect bounce. Nearly visually identical to m=3. Diminishing returns are clear: the energy surviving each additional Lambertian bounce is a shrinking fraction of the original.</p>
+
+        <p><strong>m=100:</strong> With Russian Roulette, this looks nearly identical to m=4 or m=5 despite allowing up to 100 bounces. This demonstrates that Russian Roulette correctly terminates low-energy paths early in an unbiased way. Most paths are
+            terminated by m=4 or 5 because the continuation probability (0.7 in your code) means surviving to bounce 10 has only a 0.7<sup>10</sup> &asymp; 2.8% chance. The rare deep paths are upweighted by 1/pdf to keep the estimator unbiased, and the
+            result converges to the same value as a fixed high depth without the computational cost.</p>
+
 
         <h2>Part 5: Adaptive Sampling</h2>
-		
 
-		<p>
-			Standard path tracing uses a fixed number of samples per pixel regardless of visual complexity. Adaptive sampling improves efficiency by detecting when a pixel has statistically converged and stopping early, spending more samples only where they are genuinely needed, such as shadow boundaries and complex indirect lighting, and fewer on flat diffuse surfaces.
-		</p>
-	
-		<div class="section ">
-			<h2>Convergence Test</h2>
-	
-			<p>For each pixel, we track two running sums over the per-sample luminance values:</p>
-	
-			<div class="equation ">
-				s1 = Σ xₖ &nbsp;&nbsp;&nbsp;&nbsp; s2 = Σ xₖ²
-			</div>
-	
-			<p>From these we compute the mean and variance:</p>
-	
-			<div class="equation ">
-				μ = s1 / n &nbsp;&nbsp;&nbsp;&nbsp; σ² = (1 / (n - 1)) (s2 - (s1² / n))
-			</div>
-	
-			<p>And the 95% confidence interval half-width:</p>
-	
-			<div class="equation ">
-				I = 1.96 · (σ / √n)
-			</div>
-	
-			<p>The pixel is declared converged when:</p>
-	
-			<div class="equation ">
-				I ≤ maxTolerance · μ
-			</div>
-	
-			<p>
-				This is a relative threshold, a bright pixel can tolerate more absolute variance than a near-black one, naturally matching human visual perception.
-			</p>
-		</div>
-	
-		<div class="section ">
-			<h2>Implementation</h2>
-	
-			<p>
-				For each pixel, we loop up to <code>num_samples</code> times, accumulating radiance and tracking running statistics. Every <code>samplesPerBatch</code> (16) samples we check the convergence condition and break early if met:
-			</p>
-	
-			<pre>
+
+        <p>
+            Standard path tracing uses a fixed number of samples per pixel regardless of visual complexity. Adaptive sampling improves efficiency by detecting when a pixel has statistically converged and stopping early, spending more samples only where they are genuinely
+            needed, such as shadow boundaries and complex indirect lighting, and fewer on flat diffuse surfaces.
+        </p>
+
+        <div class="section">
+            <h2>Convergence Test</h2>
+
+            <p>For each pixel, we track two running sums over the per-sample luminance values:</p>
+
+            <div class="equation ">
+                s1 = Σ xₖ &nbsp;&nbsp;&nbsp;&nbsp; s2 = Σ xₖ²
+            </div>
+
+            <p>From these we compute the mean and variance:</p>
+
+            <div class="equation ">
+                μ = s1 / n &nbsp;&nbsp;&nbsp;&nbsp; σ² = (1 / (n - 1)) (s2 - (s1² / n))
+            </div>
+
+            <p>And the 95% confidence interval half-width:</p>
+
+            <div class="equation ">
+                I = 1.96 · (σ / √n)
+            </div>
+
+            <p>The pixel is declared converged when:</p>
+
+            <div class="equation ">
+                I ≤ maxTolerance · μ
+            </div>
+
+            <p>
+                This is a relative threshold, a bright pixel can tolerate more absolute variance than a near-black one, naturally matching human visual perception.
+            </p>
+        </div>
+
+        <div class="section ">
+            <h2>Implementation</h2>
+
+            <p>
+                For each pixel, we loop up to <code>num_samples</code> times, accumulating radiance and tracking running statistics. Every <code>samplesPerBatch</code> (16) samples we check the convergence condition and break early if met:
+            </p>
+
+            <pre>
 	initialize s1, s2, m = 0
 	
 	for each sample up to num_samples:
@@ -691,45 +872,72 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 	write L_out / m to pixel
 	write m to sampleCountBuffer
 			</pre>
-	
-			<p>
-				We use luminance as the convergence scalar rather than per-channel RGB, reducing the measurement to a single perceptually weighted value. The actual sample count <code>m</code> is stored in <code>sampleCountBuffer</code>, which drives the false-color sample rate image — blue pixels converged early with few samples, while red pixels required close to the full 2048 samples.
-			</p>
-		</div>
 
-		<table>
+            <p>
+                We use luminance as the convergence scalar rather than per-channel RGB, reducing the measurement to a single perceptually weighted value. The actual sample count <code>m</code> is stored in <code>sampleCountBuffer</code>, which drives
+                the false-color sample rate image, blue pixels converged early with few samples, while red pixels required close to the full 2048 samples.
+            </p>
+        </div>
+
+        <table>
             <tr>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBdragon_rate.png " style="width: 100%; " />
+                    <img src="CBdragon_rate.png" style="width: 100%; " />
                     <figcaption>noise free render CBdragon.dae
-					</figcaption>
+                    </figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBdragon.png "  style="width: 100%; " />
+                    <img src="CBdragon.png" style="width: 100%; " />
                     <figcaption>sample rate image CBdragon.dae
-					</figcaption>
+                    </figcaption>
                 </td>
             </tr>
 
         </table>
-		<p>The dragon is rendered against the Cornell Box with soft indirect lighting from the colored walls. In the sample rate image, the walls and ceiling are solidly red, again reflecting the difficulty of resolving indirect illumination in enclosed colored environments. The dragon's body is blue, meaning its relatively uniform dark surface converges quickly with few samples. The floor beneath and around the dragon shows red/orange hotspots at the shadow contact regions, where the soft shadow boundary requires many samples to resolve cleanly. The transition zones around the dragon show green/yellow, indicating intermediate sampling rates.</p>
-		<table>
+        <p>The dragon is rendered against the Cornell Box with soft indirect lighting from the colored walls. In the sample rate image, the walls and ceiling are solidly red, again reflecting the difficulty of resolving indirect illumination in enclosed
+            colored environments. The dragon's body is blue, meaning its relatively uniform dark surface converges quickly with few samples. The floor beneath and around the dragon shows red/orange hotspots at the shadow contact regions, where the soft
+            shadow boundary requires many samples to resolve cleanly. The transition zones around the dragon show green/yellow, indicating intermediate sampling rates.</p>
+        <table>
             <tr>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBspheres_lambertian.png " style="width: 100%; " />
+                    <img src="CBspheres_lambertian.png" style="width: 100%; " />
                     <figcaption>Noise free render CBspheres_lambertian.dae </figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBspheres_lambertian_rate.png "  style="width: 100%; " />
+                    <img src="CBspheres_lambertian_rate.png" style="width: 100%; " />
                     <figcaption>sample rate image CBspheres_lambertian.dae </figcaption>
                 </td>
             </tr>
 
         </table>
+<<<<<<< HEAD
 		<p>The two spheres are rendered cleanly with soft shadows and color bleeding from the red and blue walls. In the sample rate image, the walls and ceiling are almost entirely red, requiring close to the full 2048 samples, these regions receive complex indirect illumination that bounces between the colored walls and spheres and is slow to converge. The spheres themselves are also red/orange, particularly near their shadow terminators and contact shadows on the floor where lighting varies sharply. The floor away from the spheres is blue-green, converging quickly as it receives relatively uniform direct and indirect light.
 		</p>
     
+=======
+        <p>The two spheres are rendered cleanly with soft shadows and color bleeding from the red and blue walls. In the sample rate image, the walls and ceiling are almost entirely red, requiring close to the full 2048 samples, these regions receive complex
+            indirect illumination that bounces between the colored walls and spheres and is slow to converge. The spheres themselves are also red/orange, particularly near their shadow terminators and contact shadows on the floor where lighting varies
+            sharply. The floor away from the spheres is blue-green, converging quickly as it receives relatively uniform direct and indirect light.
+        </p>
+
+        <h2>(Optional) Part 6: Extra Credit Opportunities</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        <h2>Additional Notes (please remove)</h2>
+        <ul>
+            <li>You can also add code if you'd like as so: <code>code code code</code></li>
+            <li>If you'd like to add math equations,
+                <ul>
+                    <li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
+                    <li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
+                </ul>
+            </li>
+        </ul>
+>>>>>>> 832a6acf097bc7889dcffaf87a453acf9cadeca3
     </div>
 </body>
+
+</html>
 
 </html>

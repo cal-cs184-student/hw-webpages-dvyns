@@ -378,7 +378,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         </p>
 
         <h2>Part 3: Direct Illumination</h2>
-        <h2>Uniform Hemisphere Sampling (estimate_direct_lighting_hemisphere)</h2>
+        <h3>Uniform Hemisphere Sampling (estimate_direct_lighting_hemisphere)</h3>
 
 
 
@@ -407,7 +407,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             Average over all samples by dividing by <code>num_samples</code>.
         </p>
 
-        <h2>Importance Sampling (estimate_direct_lighting_importance)</h2>
+        <h3>Importance Sampling (estimate_direct_lighting_importance)</h3>
         <p>
             Instead of sampling random directions, we sample directly toward each light source:
         </p>
@@ -436,7 +436,6 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             Average each light's contribution over its samples, then sum across all lights.
         </p>
 
-        <h3>Key Difference</h3>
         <p>
             Hemisphere sampling wastes most samples on directions that don't hit any light, while importance sampling guarantees every sample contributes useful lighting information by sampling directly toward lights.
         </p>
@@ -455,73 +454,47 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 
         </table>
 
-        <h3>Render importance sampling with difference noice level </h3>
+        <h3>Importance sampling with different noise levels: </h3>
         <div style="display: flex; flex-direction: column; align-items: center;">
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_l1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 1 Sample pixel</figcaption>
+                        <img src="bunny_1_1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 1 Light Ray</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_l4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 4 sample pixel</figcaption>
+                        <img src="bunny_1_4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 4 Light Rays</figcaption>
                     </td>
                 </tr>
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_l16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 16 sample Pixel</figcaption>
+                        <img src="bunny_1_16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 16 Light Rays</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_l64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 64 sample pixel</figcaption>
+                        <img src="bunny_1_64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
+                        <figcaption>Bunny with 64 Light Rays</figcaption>
                     </td>
                 </tr>
             </table>
         </div>
-        <h2>Noise Level Comparison: Varying Light Rays (-l flag) with 1 Sample Per Pixel</h2>
+        <h4>Noise Level Comparison: Varying Light Rays (-l flag) with 1 Sample Per Pixel</h4>
 
-        <p><strong>Scene:</strong> <code>CBbunny.dae</code> with importance sampling (<code>-s 1</code>, <code>-m 3</code>)</p>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Light Rays</th>
-                    <th>Observation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><code>-l 1</code></td>
-                    <td>Extremely noisy, heavy black/white speckles everywhere, soft shadows nearly unrecognizable</td>
-                </tr>
-                <tr>
-                    <td><code>-l 4</code></td>
-                    <td>Still very noisy but bunny shape more visible, shadows slightly softer</td>
-                </tr>
-                <tr>
-                    <td><code>-l 16</code></td>
-                    <td>Noticeably cleaner, soft shadows beginning to form under the bunny</td>
-                </tr>
-                <tr>
-                    <td><code>-l 64</code></td>
-                    <td>Much smoother, soft shadows clearly visible, significantly less noise though still grainy due to <code>-s 1</code></td>
-                </tr>
-            </tbody>
-        </table>
+        <p><strong>Scene:</strong> <code>CBbunny.dae</code> with importance sampling (<code>-s 1</code>, <code>-m 1</code>)</p>
 
         <div class="highlight">
             <p>
-                With only 1 sample per pixel (<code>-s 1</code>), increasing the number of light rays (<code>-l</code>) has a dramatic effect on noise reduction in soft shadows. At <code>-l 1</code>, the render is extremely noisy with harsh black and
-                white speckles, making it difficult to distinguish soft shadow boundaries. As the number of light samples increases to 4 and 16, the soft shadows under the bunny become progressively smoother and more defined. At <code>-l 64</code>, the
-                shadows are noticeably cleaner, though some noise remains due to the single pixel sample.
+                With only 1 sample per pixel (<code>-s 1</code>), increasing the number of light rays (<code>-l</code>) has a dramatic effect on noise reduction in soft shadows. 
+                At <code>-l 1</code>, the render is extremely noisy with black and white speckles spreading out from the main shadow area, making it difficult to distinguish soft shadow boundaries. 
+                As the number of light samples increases to 4 and 16, the soft shadows under the bunny become progressively smoother and more defined. 
+                At <code>-l 64</code>, the shadows are noticeably cleaner, though some noise remains due to the single pixel sample.
             </p>
             <p>
                 This demonstrates that more light samples per intersection point directly reduces variance in shadow regions, since each additional sample better approximates the integral over the area light.
             </p>
         </div>
-        <h2>Noise Level Comparison: Hemisphere vs. Importance Sampling </h2>
+        <h3>Noise Level Comparison: Hemisphere vs. Importance Sampling </h3>
         <p class="highlight">
             Uniform hemisphere sampling and importance sampling produce noticeably different results for the same scene and sample count. With hemisphere sampling, the render is significantly noisier, the walls, floor, and bunny surface all exhibit heavy grainy speckles
             because most sampled directions miss the light source entirely, contributing nothing to the estimate. The soft shadows are poorly defined and the overall image appears darker and less converged. Importance sampling, by contrast, produces a

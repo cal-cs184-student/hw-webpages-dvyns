@@ -379,7 +379,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 
         <h2>Part 3: Direct Illumination</h2>
         <p>
-            We implemented both direct-lighting estimators in <code>pathtracer.cpp</code>: uniform hemisphere sampling in <code>estimate_direct_lighting_hemisphere(...)</code> and light importance sampling in <code>estimate_direct_lighting_importance(...)</code>. All Part 3 images below are full-scene <code>640x480</code> renders with <code>m = 1</code>, so they isolate direct illumination rather than recursive global illumination.
+            We implemented both direct-lighting estimators in <code>pathtracer.cpp</code>: uniform hemisphere sampling in <code>estimate_direct_lighting_hemisphere(...)</code> and light importance sampling in <code>estimate_direct_lighting_importance(...)</code>. 
         </p>
 
         <h3>Implementation Walkthrough</h3>
@@ -430,9 +430,6 @@ shadow_ray.max_t = dist - EPS_F;
 if (!bvh-&gt;intersect(shadow_ray, &amp;shadow_isect)) {
   L_out += isect.bsdf-&gt;f(w_out, wi_obj) * rad * wi_obj.z / pdf;
 }</code></pre>
-        <p>
-            The practical difference is that hemisphere sampling spends most of its samples on directions that never hit the small ceiling light, while importance sampling forces every sample to point at a light source and therefore uses the same sample budget much more efficiently.
-        </p>
 
         <h3>Uniform Hemisphere vs. Importance Sampling</h3>
         <p>
@@ -451,7 +448,11 @@ if (!bvh-&gt;intersect(shadow_ray, &amp;shadow_isect)) {
             </tr>
         </table>
         <p>
-            The difference is immediate in the images. Uniform hemisphere sampling is still a valid estimator, but on this scene it is extremely inefficient because the small area light covers only a tiny fraction of the hemisphere. Most sampled directions contribute nothing, so the bunny, walls, and floor remain heavily speckled even at <code>64</code> samples per pixel. Importance sampling is much cleaner at the same settings because every shadow-ray sample is drawn from the light itself. That makes the direct shadow under the bunny more stable, the wall gradients smoother, and the overall estimate much less noisy for the same render budget.
+            The difference is pretty clear. 
+            Uniform hemisphere sampling is extremely inefficient compared to importance sampling here because the small area light covers only a tiny fraction of the hemisphere. 
+            Most sampled directions contribute nothing, so the bunny, walls, and floor remain heavily speckled even at <code>64</code> samples per pixel. 
+            The efficiency of importance sampling comes from the fact that every shadow-ray sample comes from a light source. 
+            That makes the the overall estimate much less noisy for the same render budget.
         </p>
 
         <h3>Importance Sampling with Different Numbers of Light Rays</h3>
@@ -481,12 +482,17 @@ if (!bvh-&gt;intersect(shadow_ray, &amp;shadow_isect)) {
             </tr>
         </table>
         <p>
-            Increasing the number of light rays reduces variance in exactly the region where direct-light integration is hardest: the soft shadow under the bunny and the nearby floor. At <code>-l 1</code>, the shadow boundary is dominated by salt-and-pepper noise because each shading point sees only one sample of the area light. At <code>-l 4</code> and <code>-l 16</code>, that boundary becomes progressively more stable and the dark penumbra under the bunny stops breaking apart into isolated black speckles. By <code>-l 64</code>, the shadow is much smoother and the floor noise is substantially reduced, even though we still used only one camera sample per pixel. This matches the estimator: more light samples at each hit point give a better Monte Carlo approximation of the area-light integral, so soft-shadow noise falls quickly as <code>-l</code> increases.
+            Increasing the number of light rays reduces variance in the soft shadow under the bunny and the nearby floor. 
+            At <code>-l 1</code>, the shadow boundary is dominated by noise because each shading point sees only one sample of the area light. 
+            At <code>-l 4</code> and <code>-l 16</code>, that boundary becomes progressively more stable and the shadow under the bunny stops breaking apart into isolated specks.
+            By <code>-l 64</code>, the shadow is much smoother and the floor noise is substantially reduced, even though we still used only one camera sample per pixel. 
+            This matches what we expect from the estimator. 
+            More light samples at each hit point gives a better Monte Carlo approximation of the area-light integral. Hence, soft-shadow noise falls quickly as <code>-l</code> increases.
         </p>
 
 <h2>Part 4: Global Illumination</h2>
         <p>
-            We extended our Part 3 estimator into a recursive global-illumination integrator. All Part 4 images below are full-scene <code>640x480</code> renders rather than cropped window renders.
+            We extended our Part 3 estimator into a recursive global-illumination integrator.
         </p>
 
         <h3>Implementation Walkthrough</h3>
@@ -536,7 +542,7 @@ if (!bvh-&gt;intersect(shadow_ray, &amp;shadow_isect)) {
             \]
         </p>
         <p>
-            where <code>p(omega_i)</code> is the BSDF sampling density and <code>p_rr = 0.7</code> is the Russian roulette survival probability. That estimator appears almost verbatim in our recursive implementation.
+            where \(p(\omega_i)\) is the BSDF sampling density and \(p_{rr} = 0.7\) is the Russian roulette survival probability. We directly implent that estimator:
         </p>
         <pre><code>Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &amp;r,
                                                   const Intersection &amp;isect) {

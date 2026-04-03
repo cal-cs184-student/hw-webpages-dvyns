@@ -834,7 +834,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         </p>
 
         <div class="section">
-            <h2>Convergence Test</h2>
+            <h3>Convergence Test</h3>
 
             <p>For each pixel, we keep two running sums over the scalar luminance samples returned by <code>rad.illum()</code>:</p>
 
@@ -874,7 +874,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         </div>
 
         <div class="section ">
-            <h2>Implementation</h2>
+            <h3>Implementation</h3>
 
             <p>
                 Our implementation uses the command-line parameters <code>-a samplesPerBatch maxTolerance</code>. For the renders below, we used <code>-s 2048 -a 32 0.05 -l 1 -m 5</code>, so every pixel is tested for convergence after each batch of 32 camera samples.
@@ -937,6 +937,241 @@ sampleCountBuffer[x + y * sampleBuffer.w] = m;</code></pre>
 
         </table>
         <p>The dragon scene produces a broader spread into green and red because the mirror dragon and the surrounding soft shadow boundaries create more difficult light transport. The walls and the floor directly around the dragon require more samples than the smoother empty regions of the Cornell box, and the mirrored highlights on the dragon keep more pixels near the high-sample end of the scale. Compared to the bunny scene, this rate image spends visibly more area near the red end because specular transport and sharp shadow transitions are harder for the current adaptive estimator to certify early.</p>
+
+        <h2>Part 6: Extra Credit</h2>
+        <!-- BVH_HEURISTICS_START -->
+        <h3>BVH heuristics</h3>
+        <p>
+            To test our BVH heuristic, we added two alternative split rules to compare our SAH split from Part 2: a naive centroid-midpoint split and a bucketed SAH as described in PBRT. 
+            The renderer still calls <code>new BVHAccel(primitives)</code>; the heuristic choice is read inside the BVH constructor from <code>CGL_BVH_HEURISTIC</code>.
+        </p>
+        <p>
+            Our benchmark command was:
+        </p>
+        <pre><code>CGL_BVH_HEURISTIC=&lt;naive|bucketed|exhaustive&gt; ./pathtracer -s 8 -l 1 -m 1 -t 1 -r 320 240 -f out.png &lt;scene&gt;</code></pre>
+        <p>
+            The exhaustive SAH code path is still the same one from Part 2: on each axis we sort primitives by centroid, build prefix and suffix bounding boxes, evaluate every split point using the lecture SAH cost, and recurse only when the best split beats a leaf. 
+        </p><p>
+            The naive builder follows the same overall recursive structure, but chooses the largest centroid-extent axis and partitions at the centroid midpoint, with a median fallback if the midpoint would produce an empty child. 
+        </p><p>
+            The bucketed builder also follows the same recursive structure, but replaces the exhaustive split scan with 12 centroid buckets on the dominant axis and evaluates SAH only at bucket boundaries.
+        </p>
+        <pre><code>switch (heuristic) {
+  case BVHSplitHeuristic::CENTROID_MIDPOINT:
+    mid = midpoint_split(start, end, centroid_bbox);
+    break;
+  case BVHSplitHeuristic::SAH_BUCKETED:
+    mid = bucketed_sah_split(start, end, bbox, centroid_bbox);
+    break;
+  case BVHSplitHeuristic::SAH_EXHAUSTIVE:
+    mid = exhaustive_sah_split(start, end, bbox);
+    break;
+}</code></pre>
+        <p>
+            Both SAH-based builders minimize the same normalized cost:
+        </p>
+        <p>
+            \[
+            C_{\text{split}} = C_{\text{trav}} + \frac{S_L N_L + S_R N_R}{S_P},
+            \qquad
+            C_{\text{leaf}} = N.
+            \]
+        </p>
+        <p>
+            Here, \(S_P\) is the parent surface area, \(S_L\) and \(S_R\) are the child surface areas, and \(N_L\), \(N_R\) are the primitive counts in the two children. We recurse only when \(C_{\text{split}} &lt; C_{\text{leaf}}\). In code, the bucketed version evaluates the same expression at only 11 bucket boundaries:
+        </p>
+        <pre><code>double cost = kTraversalCost +
+              (left_boxes[i].surface_area() * left_counts[i] +
+               right_boxes[i].surface_area() * right_counts[i]) /
+                  bbox.surface_area();</code></pre>
+        <p>
+            The asymptotic construction-time tradeoff follows from the amount of work each node performs. 
+            Our midpoint builder uses one partition pass per node, so its average recurrence is 
+            \[T_{\text{mid}}(n) = 2T(n/2) + O(n) = O(n \log n).\]
+            The bucketed SAH also performs linear work per node because the number of buckets is fixed: \[T_{\text{bucket}}(n) = 2T(n/2) + O(Bn) = O(n \log n)\] 
+            for constant \(B = 12\). 
+            The exhaustive SAH is as before so its recurrence is \[T_{\text{exhaustive}}(n) = 2T(n/2) + O(n \log n) = O(n \log^2 n).\]
+        </p>
+        <p>
+            The probabilistic intuition behind bucketed SAH is still the usual surface-area argument:
+        </p>
+        <p>
+            \[
+            P(\text{ray hits child } i \mid \text{ray hits parent}) \approx \frac{S_i}{S_P}.
+            \]
+        </p>
+        <p>
+            If primitive centroids are not arranged adversarially, nearby split planes tend to have similar child counts and similar child surface areas. 
+            Sampling that cost curve only at bucket boundaries, assuming we have enough bucket boundaries, usually lands close to the actual minimum.
+            Hence the bucketed approach performs similarly on average despite evaluating far fewer candidates.
+        </p>
+        <div style="position: relative; left: 50%; transform: translateX(-50%); width: min(1200px, 95vw); margin: 24px 0;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; text-align: center;">
+                <tr>
+                    <th style="padding: 10px 12px; text-align: left;">Scene</th>
+                    <th style="padding: 10px 12px;">Naive</th>
+                    <th style="padding: 10px 12px;">Bucketed SAH</th>
+                    <th style="padding: 10px 12px;">Exhaustive SAH</th>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0007 s<br/>Render: 0.5818 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0011 s<br/>Render: 0.4782 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0116 s<br/>Render: 0.4214 s</td>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0175 s<br/>Render: 0.9148 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0631 s<br/>Render: 0.8148 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.4367 s<br/>Render: 0.8189 s</td>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0239 s<br/>Render: 1.0261 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.0566 s<br/>Render: 1.2505 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.9076 s<br/>Render: 1.0078 s</td>
+                </tr>
+                <tr>
+                    <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Wall-E</th>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.1459 s<br/>Render: 1.8618 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 0.2651 s<br/>Render: 1.5289 s</td>
+                    <td style="padding: 12px; vertical-align: top;">Build: 5.1327 s<br/>Render: 1.5285 s</td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            The measurements show the expected tradeoff. 
+            Exhaustive SAH gives the best or near-best render time with the cost of a substantially increased construction time. 
+            On <code>bunny.dae</code>, for example, bucketed SAH renders slightly faster than exhaustive SAH at this sample count while building about 6.9x faster. 
+            On <code>wall-e.dae</code>, bucketed SAH and exhaustive SAH render in almost identical times, but bucketed SAH builds in 0.2651 s instead of 5.1327 s, over 20x faster.
+        </p>
+        <p>
+            The one scene where exhaustive SAH still substantially outperforms bucketed SAH is <code>maxplanck.dae</code>. BUT, it cuts render time from 1.2505 s to 1.0078 s compared to bucketed SAH, but the construction cost rises from 0.0566 s to 0.9076 s. 
+            The bucketed SAH is still faster overall.
+            Technically the naive approach got luckly here and ended up with the best overall runtime, but the key word here is lucky.
+            The midpoint split was slower than bucketed SAH in the other three tests, and on average, that is what we should expect.
+        </p>
+        <!-- BVH_HEURISTICS_END -->
+        <h2>More BSDF</h2>
+        <p>
+            We also completed the specular and microfacet methods in <code>advanced_bsdf.cpp</code>. 
+            The two simplest cases are the perfect-mirror and perfect-refraction materials. 
+            For mirror reflection, we reflect the outgoing direction across the local surface normal and return the delta-distribution throughput scaled by \(1 / |\cos\theta_i|\). 
+            This matches the ideal specular BRDF form discussed in PBRT's treatment of specular reflection and transmission.
+            <a href="https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission">PBRT, Specular Reflection and Transmission</a>.
+        </p>
+        <pre><code>reflect(wo, wi);
+*pdf = 1.0;
+return reflectance / abs_cos_theta(*wi);</code></pre>
+        <p>
+            For refraction, we apply Snell's law to compute the transmitted direction. If total internal reflection occurs, we return zero transmission. Otherwise the returned throughput is scaled by the transmittance and the change-of-measure term:
+        </p>
+        <p>
+            \[
+            \eta_i \sin \theta_i = \eta_t \sin \theta_t,
+            \qquad
+            f_t \propto \frac{T}{|\cos \theta_t| \, \eta^2}.
+            \]
+        </p>
+        <p>
+            Our glass BSDF combines reflection and transmission using the Fresnel reflectance \(F_r\). We compute the dielectric Fresnel term from the parallel and perpendicular polarization components,
+        </p>
+        <p>
+            \[
+            F_r = \frac{1}{2}\left(r_s^2 + r_p^2\right),
+            \]
+        </p>
+        <p>
+            then use that as the Bernoulli probability for whether the sampled path reflects or refracts. This is exactly the standard specular dielectric split described in PBRT's <a href="https://www.pbr-book.org/3ed-2018/Reflection_Models/Specular_Reflection_and_Transmission">Specular Reflection and Transmission</a> chapter.
+        </p>
+        <pre><code>if (coin_flip(fr)) {
+  reflect(wo, wi);
+  *pdf = fr;
+  return reflectance * fr / abs_cos_theta(*wi);
+}
+
+*wi = Vector3D(-eta * wo.x, -eta * wo.y,
+               wo.z > 0.0 ? -cos_theta_t : cos_theta_t);
+*pdf = 1.0 - fr;
+return transmittance * (1.0 - fr) /
+       (abs_cos_theta(*wi) * eta * eta);</code></pre>
+        <p>
+            The microfacet material is the most involved of the completed BSDFs. 
+            We used a Beckmann normal distribution, Smith masking-shadowing, and conductor Fresnel evaluated at the half-vector angle, which together give the Torrance-Sparrow form
+        </p>
+        <p>
+            \[
+            f_r(\omega_o, \omega_i) = \frac{F(\omega_i) \, G(\omega_o, \omega_i) \, D(h)}{4 \cos \theta_o \cos \theta_i},
+            \qquad
+            h = \frac{\omega_o + \omega_i}{\|\omega_o + \omega_i\|}.
+            \]
+        </p>
+        <p>
+            The Beckmann distribution term we implemented is
+        </p>
+        <p>
+            \[
+            D(h) = \frac{\exp\left(-\tan^2\theta_h / \alpha^2\right)}{\pi \alpha^2 \cos^4\theta_h},
+            \]
+        </p>
+        <p>
+            and our geometric attenuation uses PBRT's Smith approximation
+        </p>
+        <p>
+            \[
+            G(\omega_o, \omega_i) = \frac{1}{1 + \Lambda(\omega_o) + \Lambda(\omega_i)}.
+            \]
+        </p>
+        <p>
+            We followed PBRT's microfacet chapter.
+            <a href="https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models">PBRT, Microfacet Models</a>.
+        </p>
+        <pre><code>const Vector3D h = (wo + wi).unit();
+const double wiDotH = dot(wi, h);
+return F(wiDotH) * (G(wo, wi) * D(h) / (4.0 * wo.z * wi.z));</code></pre>
+        <p>
+            For sampling, we sample a Beckmann-distributed half-vector, reflect \(\omega_o\) about that half-vector, and convert the half-vector density into a direction-space density using the Jacobian factor <code>1 / (4 (wo · h))</code>. In code, that becomes
+        </p>
+        <pre><code>*pdf = D_h * h.z / (4.0 * woDotH);
+*wi = 2.0 * woDotH * h - wo;</code></pre>
+        <p>
+            The six renders below showcase our completed specular and microfacet BSDFs:
+        </p>
+        <div align="middle">
+            <table style="width: 100%; table-layout: fixed;">
+                <tr>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_specular_cbdragon_mirror.png" align="middle" width="100%" />
+                        <figcaption><code>CBdragon.dae</code> mirror</figcaption>
+                    </td>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_specular_cbgems_glass.png" align="middle" width="100%" />
+                        <figcaption><code>CBgems.dae</code> glass</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_specular_cblucy_glass.png" align="middle" width="100%" />
+                        <figcaption><code>CBlucy.dae</code> glass</figcaption>
+                    </td>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_microfacet_cbspheres_al_ag.png" align="middle" width="100%" />
+                        <figcaption><code>CBspheres_microfacet_al_ag.dae</code> microfacet</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_microfacet_cbbunny_cu.png" align="middle" width="100%" />
+                        <figcaption><code>CBbunny_microfacet_cu.dae</code> microfacet</figcaption>
+                    </td>
+                    <td align="middle" width="50%">
+                        <img src="images/part5/more-bsdf/p6_microfacet_cbdragon_au.png" align="middle" width="100%" />
+                        <figcaption><code>CBdragon_microfacet_au.dae</code> microfacet</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
     </div>
 </body>
 

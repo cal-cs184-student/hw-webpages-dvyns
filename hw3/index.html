@@ -378,130 +378,113 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         </p>
 
         <h2>Part 3: Direct Illumination</h2>
-        <h3>Uniform Hemisphere Sampling (estimate_direct_lighting_hemisphere)</h3>
-
-
-
         <p>
-            To estimate direct lighting using uniform hemisphere sampling, we sample
-            <code>num_samples = scene-&gt;lights.size() * ns_area_light</code> random directions uniformly over the hemisphere at the hit point. For each sample:
+            We implemented both direct-lighting estimators in <code>pathtracer.cpp</code>: uniform hemisphere sampling in <code>estimate_direct_lighting_hemisphere(...)</code> and light importance sampling in <code>estimate_direct_lighting_importance(...)</code>. All Part 3 images below are full-scene <code>640x480</code> renders with <code>m = 1</code>, so they isolate direct illumination rather than recursive global illumination.
         </p>
 
-        <ul>
-            <li>Sample a random direction <code>wi</code> in object space using <code>hemisphereSampler-&gt;get_sample()</code></li>
-            <li>Transform <code>wi</code> to world space using the <code>o2w</code> matrix</li>
-            <li>Cast a shadow ray from <code>hit_p</code> in that direction with <code>min_t = EPS_F</code> to avoid self-intersection</li>
-            <li>If the shadow ray intersects an emissive surface, retrieve its emission via <code>get_emission()</code></li>
-            <li>Accumulate the contribution:
-                <code>f(w_out, wi) * emission * cos(theta) / pdf</code>
-            </li>
-        </ul>
-
+        <h3>Implementation Walkthrough</h3>
         <p>
-            Since we sample uniformly, <code>pdf = 1/(2π)</code>, so we multiply by <code>2π</code>.
-            <br>
-            <code>cos(theta) = wi.z</code> since z is "up" in object space.
+            For uniform hemisphere sampling, we build a local shading frame at the hit point, draw directions uniformly over the upper hemisphere with <code>hemisphereSampler-&gt;get_sample()</code>, trace a shadow ray in that direction, and only accumulate a contribution when that ray lands on an emissive surface. Since the sampling density is uniform,
+        </p>
+        <p>
+            \[
+            p(\omega_i) = \frac{1}{2\pi},
+            \]
+        </p>
+        <p>
+            so the Monte Carlo estimator in our current implementation is
+        </p>
+        <p>
+            \[
+            \widehat{L}_{\text{hemi}} = \frac{2\pi}{N} \sum_{k=1}^{N} f_r(x, \omega_o, \omega_k)\,L_e(x_k, -\omega_k)\,\max(0, \cos \theta_k)\,\mathbf{1}_{\text{visible}}.
+            \]
+        </p>
+        <pre><code>Vector3D w_in = hemisphereSampler-&gt;get_sample();
+Vector3D w_in_world = o2w * w_in;
+Ray shadow_ray(hit_p, w_in_world);
+shadow_ray.min_t = EPS_F;
+
+if (bvh-&gt;intersect(shadow_ray, &amp;isect_light)) {
+  Vector3D emm = isect_light.bsdf-&gt;get_emission();
+  if (emm.norm() &gt; 0) {
+    L_out += isect.bsdf-&gt;f(w_out, w_in) * emm * w_in.z * (2.0 * PI);
+  }
+}</code></pre>
+        <p>
+            For importance sampling, we instead sample each light source directly with <code>light-&gt;sample_L(...)</code>, transform the sampled direction into the local frame, cast a shadow ray with <code>max_t = dist - EPS_F</code>, and add the contribution only if the light is unoccluded. The estimator is
+        </p>
+        <p>
+            \[
+            \widehat{L}_{\text{light}} = \sum_{j \in \text{lights}} \frac{1}{N_j} \sum_{k=1}^{N_j}
+            \frac{f_r(x, \omega_o, \omega_{j,k})\,L_j(x, \omega_{j,k})\,\max(0, \cos \theta_{j,k})}{p_j(\omega_{j,k})}\,\mathbf{1}_{\text{visible}}.
+            \]
+        </p>
+        <pre><code>Vector3D rad = light-&gt;sample_L(hit_p, &amp;w_in_world, &amp;dist, &amp;pdf);
+Vector3D wi_obj = w2o * w_in_world;
+if (wi_obj.z &lt; 0) continue;
+
+Ray shadow_ray(hit_p, w_in_world);
+shadow_ray.min_t = EPS_F;
+shadow_ray.max_t = dist - EPS_F;
+
+if (!bvh-&gt;intersect(shadow_ray, &amp;shadow_isect)) {
+  L_out += isect.bsdf-&gt;f(w_out, wi_obj) * rad * wi_obj.z / pdf;
+}</code></pre>
+        <p>
+            The practical difference is that hemisphere sampling spends most of its samples on directions that never hit the small ceiling light, while importance sampling forces every sample to point at a light source and therefore uses the same sample budget much more efficiently.
         </p>
 
+        <h3>Uniform Hemisphere vs. Importance Sampling</h3>
         <p>
-            Average over all samples by dividing by <code>num_samples</code>.
+            For this comparison we used <code>CBbunny.dae</code> with <code>-s 64 -l 1 -m 1</code>, once with <code>-H</code> and once with the default importance-sampling estimator.
         </p>
-
-        <h3>Importance Sampling (estimate_direct_lighting_importance)</h3>
-        <p>
-            Instead of sampling random directions, we sample directly toward each light source:
-        </p>
-
-        <ul>
-            <li>Loop over every light in the scene</li>
-            <li>For delta lights (point lights), take 1 sample; for area lights, take <code>ns_area_light</code> samples</li>
-            <li>
-                For each sample, call
-                <code>light-&gt;sample_L(hit_p, &amp;wi_world, &amp;dist, &amp;pdf)</code> to get:
-                <ul>
-                    <li>A direction toward the light <code>wi_world</code></li>
-                    <li>The distance to the light <code>dist</code></li>
-                    <li>The probability density <code>pdf</code></li>
-                </ul>
-            </li>
-            <li>Transform <code>wi_world</code> to object space and skip if <code>wi.z &lt; 0</code> (light behind surface)</li>
-            <li>Cast a shadow ray with <code>max_t = dist - EPS_F</code> if nothing blocks it, the light is visible</li>
-            <li>
-                Accumulate:
-                <code>f(w_out, wi_obj) * radiance * cos(theta) / pdf</code>
-            </li>
-        </ul>
-
-        <p>
-            Average each light's contribution over its samples, then sum across all lights.
-        </p>
-
-        <p>
-            Hemisphere sampling wastes most samples on directions that don't hit any light, while importance sampling guarantees every sample contributes useful lighting information by sampling directly toward lights.
-        </p>
-
-        <table>
+        <table style="width: 100%; table-layout: fixed;">
             <tr>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part3/bunny_hemisphere.png" alt="bunny_hemisphere screenshot" style="width: 100%;" />
-                    <figcaption>Bunny hemispere</figcaption>
+                    <img src="images/part3/compare/p3_cbbunny_hemisphere_s64_l1.png" alt="CBbunny hemisphere direct lighting" style="width: 100%; display: block;" />
+                    <figcaption>Uniform hemisphere sampling, <code>CBbunny.dae</code>, 640x480, 64 spp, 1 light ray, m = 1</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part3/bunny_importance.png" alt="bunny importance screenshot" style="width: 100%;" />
-                    <figcaption>Bunny importance</figcaption>
+                    <img src="images/part3/compare/p3_cbbunny_importance_s64_l1.png" alt="CBbunny importance direct lighting" style="width: 100%; display: block;" />
+                    <figcaption>Importance sampling, <code>CBbunny.dae</code>, 640x480, 64 spp, 1 light ray, m = 1</figcaption>
                 </td>
             </tr>
-
         </table>
+        <p>
+            The difference is immediate in the images. Uniform hemisphere sampling is still a valid estimator, but on this scene it is extremely inefficient because the small area light covers only a tiny fraction of the hemisphere. Most sampled directions contribute nothing, so the bunny, walls, and floor remain heavily speckled even at <code>64</code> samples per pixel. Importance sampling is much cleaner at the same settings because every shadow-ray sample is drawn from the light itself. That makes the direct shadow under the bunny more stable, the wall gradients smoother, and the overall estimate much less noisy for the same render budget.
+        </p>
 
-        <h3>Importance sampling with different noise levels: </h3>
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="text-align: center; padding: 12px;">
-                        <img src="images/part3/bunny_1_1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 1 Light Ray</figcaption>
-                    </td>
-                    <td style="text-align: center; padding: 12px;">
-                        <img src="images/part3/bunny_1_4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 4 Light Rays</figcaption>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center; padding: 12px;">
-                        <img src="images/part3/bunny_1_16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 16 Light Rays</figcaption>
-                    </td>
-                    <td style="text-align: center; padding: 12px;">
-                        <img src="images/part3/bunny_1_64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
-                        <figcaption>Bunny with 64 Light Rays</figcaption>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <h4>Noise Level Comparison: Varying Light Rays (-l flag) with 1 Sample Per Pixel</h4>
+        <h3>Importance Sampling with Different Numbers of Light Rays</h3>
+        <p>
+            The soft-shadow comparison below uses <code>CBbunny.dae</code> with importance sampling, <code>-s 1 -m 1</code>, and varying <code>-l = 1, 4, 16, 64</code> as requested by the Part 3 spec.
+        </p>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part3/light-rays/p3_cbbunny_importance_s1_l1.png" alt="CBbunny importance l1" style="width: 100%; display: block;" />
+                    <figcaption>Importance sampling, <code>-l 1</code>, 640x480, 1 spp, m = 1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part3/light-rays/p3_cbbunny_importance_s1_l4.png" alt="CBbunny importance l4" style="width: 100%; display: block;" />
+                    <figcaption>Importance sampling, <code>-l 4</code>, 640x480, 1 spp, m = 1</figcaption>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part3/light-rays/p3_cbbunny_importance_s1_l16.png" alt="CBbunny importance l16" style="width: 100%; display: block;" />
+                    <figcaption>Importance sampling, <code>-l 16</code>, 640x480, 1 spp, m = 1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part3/light-rays/p3_cbbunny_importance_s1_l64.png" alt="CBbunny importance l64" style="width: 100%; display: block;" />
+                    <figcaption>Importance sampling, <code>-l 64</code>, 640x480, 1 spp, m = 1</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>
+            Increasing the number of light rays reduces variance in exactly the region where direct-light integration is hardest: the soft shadow under the bunny and the nearby floor. At <code>-l 1</code>, the shadow boundary is dominated by salt-and-pepper noise because each shading point sees only one sample of the area light. At <code>-l 4</code> and <code>-l 16</code>, that boundary becomes progressively more stable and the dark penumbra under the bunny stops breaking apart into isolated black speckles. By <code>-l 64</code>, the shadow is much smoother and the floor noise is substantially reduced, even though we still used only one camera sample per pixel. This matches the estimator: more light samples at each hit point give a better Monte Carlo approximation of the area-light integral, so soft-shadow noise falls quickly as <code>-l</code> increases.
+        </p>
 
-        <p><strong>Scene:</strong> <code>CBbunny.dae</code> with importance sampling (<code>-s 1</code>, <code>-m 1</code>)</p>
-
-        <div class="highlight">
-            <p>
-                With only 1 sample per pixel (<code>-s 1</code>), increasing the number of light rays (<code>-l</code>) has a dramatic effect on noise reduction in soft shadows. 
-                At <code>-l 1</code>, the render is extremely noisy with black and white speckles spreading out from the main shadow area, making it difficult to distinguish soft shadow boundaries. 
-                As the number of light samples increases to 4 and 16, the soft shadows under the bunny become progressively smoother and more defined. 
-                At <code>-l 64</code>, the shadows are noticeably cleaner, though some noise remains due to the single pixel sample.
-            </p>
-            <p>
-                This demonstrates that more light samples per intersection point directly reduces variance in shadow regions, since each additional sample better approximates the integral over the area light.
-            </p>
-        </div>
-        <h3>Noise Level Comparison: Hemisphere vs. Importance Sampling </h3>
-        <p class="highlight">
-            Uniform hemisphere sampling and importance sampling produce noticeably different results for the same scene and sample count. With hemisphere sampling, the render is significantly noisier, the walls, floor, and bunny surface all exhibit heavy grainy speckles
-            because most sampled directions miss the light source entirely, contributing nothing to the estimate. The soft shadows are poorly defined and the overall image appears darker and less converged. Importance sampling, by contrast, produces a
-            much cleaner render with the same settings soft shadows under the bunny are smooth and well-defined, color bleeding from the red and blue walls is more accurate, and the overall lighting looks physically correct. This difference arises because
-            importance sampling guarantees every shadow ray is cast toward a light source, making each sample maximally informative, whereas hemisphere sampling wastes the vast majority of samples on directions that carry no direct lighting contribution.
-            In short, importance sampling achieves the same visual quality as hemisphere sampling with far fewer samples, making it the clearly superior method for direct lighting estimation in scenes with small area lights.
-        </p>        <h2>Part 4: Global Illumination</h2>
+<h2>Part 4: Global Illumination</h2>
         <p>
             We extended our Part 3 estimator into a recursive global-illumination integrator. All Part 4 images below are full-scene <code>640x480</code> renders rather than cropped window renders.
         </p>
@@ -921,7 +904,8 @@ sampleCountBuffer[x + y * sampleBuffer.w] = m;</code></pre>
             </tr>
         </table>
         <p>
-            In the bunny scene, most of the ceiling, the broad floor regions, and the smooth back wall converge quickly and appear blue or blue-cyan in the rate map. The sampling demand rises around the bunny silhouette, the contact shadow under the model, and the colored indirect-lighting transitions near the side walls, which show up as green and red. That matches the current estimator: those are the places where indirect transport changes fastest from pixel to pixel, so the confidence interval shrinks more slowly.
+            In the bunny scene, the two clearest red-dominant regions are the ceiling inside the box and the underside of the bunny, especially around the contact-shadow area. 
+            The directly visible light itself drops to a lower rate, and much of the surrounding walls and floor sit in green and blue instead of red. That pattern fits the current estimator: the ceiling and the lower side of the bunny carry the strongest lighting transitions in this view, while the broader wall and floor regions are smooth enough to converge somewhat earlier.
         </p>
         <table style="width: 100%; table-layout: fixed;">
             <tr>
@@ -936,7 +920,7 @@ sampleCountBuffer[x + y * sampleBuffer.w] = m;</code></pre>
             </tr>
 
         </table>
-        <p>The dragon scene produces a broader spread into green and red because the mirror dragon and the surrounding soft shadow boundaries create more difficult light transport. The walls and the floor directly around the dragon require more samples than the smoother empty regions of the Cornell box, and the mirrored highlights on the dragon keep more pixels near the high-sample end of the scale. Compared to the bunny scene, this rate image spends visibly more area near the red end because specular transport and sharp shadow transitions are harder for the current adaptive estimator to certify early.</p>
+        <p>The dragon scene shows the same two main red-dominant regions as the bunny scene: the ceiling inside the box and the underside of the model near the contact-shadow area. The difference is that the dragon image carries substantially more noise overall, so a much larger surrounding region stays closer to the high-sample end of the scale. Briefly, that happens because the mirror dragon introduces specular transport, which produces higher-variance reflected paths than the diffuse bunny and makes the adaptive confidence test harder to satisfy early.</p>
 
         <h2>Part 6: Extra Credit</h2>
         <!-- BVH_HEURISTICS_START -->

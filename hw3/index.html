@@ -169,21 +169,21 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: center;">
-                        <img src="cube_screenshot_3-17_12-27-41.png" style="width: 100%;" />
+                        <img src="images/part1/cube_screenshot_3-17_12-27-41.png" style="width: 100%;" />
                         <figcaption>Cube</figcaption>
                     </td>
                     <td style="text-align: center;">
-                        <img src="teapot_screenshot_3-17_12-24-19.png" style="width: 100%;" />
+                        <img src="images/part1/teapot_screenshot_3-17_12-24-19.png" style="width: 100%;" />
                         <figcaption>Teapot</figcaption>
                     </td>
                 </tr>
                 <tr>
                     <td style="text-align: center;">
-                        <img src="banana_screenshot_3-17_12-22-57.png" style="width: 100%;" />
+                        <img src="images/part1/banana_screenshot_3-17_12-22-57.png" style="width: 100%;" />
                         <figcaption>Banana</figcaption>
                     </td>
                     <td style="text-align: center;">
-                        <img src="CBbunny_screenshot_3-17_12-26-29.png" style="width: 100%;" />
+                        <img src="images/part1/CBbunny_screenshot_3-17_12-26-29.png" style="width: 100%;" />
                         <figcaption>Bunny</figcaption>
                     </td>
                 </tr>
@@ -194,10 +194,10 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: center;">
-                        <img src="CBlucy_screenshot_screwed up.png" style="width: 100%;" />
+                        <img src="images/part1/CBlucy_screenshot_screwed up.png" style="width: 100%;" />
                     </td>
                     <td style="text-align: center;">
-                        <img src="maxplanck_screwed.png" style="width: 100%;" />
+                        <img src="images/part1/maxplanck_screwed.png" style="width: 100%;" />
                     </td>
                 </tr>
             </table>
@@ -211,7 +211,7 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
         <p>
             So we took to inspecting the BVH mesh around Max Planck's particularly problematic nose:
         </p>
-        <img src="maxnose.png" style="width: 50%; margin: 0 auto; display: block;" />
+        <img src="images/part1/maxnose.png" style="width: 50%; margin: 0 auto; display: block;" />
         <p>
             It seemed like problem regions are areas with very dense/small triangle meshes. 
             That suggested that there could be some numerical issues with our edge testing. 
@@ -227,7 +227,7 @@ const double c = dot(r.o - o, r.o - o) - this->r * this->r;
             But it also seemed to have no noticeable impact on performance, so we kept it.
         </p>
         <h3>Max Planck after nose job:</h3>
-        <img src="maxnosejob.png" style="display: block; margin: 0 auto; width: 70%;" />
+        <img src="images/part1/maxnosejob.png" style="display: block; margin: 0 auto; width: 70%;" />
 
         <h2>Part 2: Bounding Volume Hierarchy</h2>
         <p>
@@ -275,21 +275,21 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="wall-e_screenshot_3-18_14-30-1.png" alt="Wall-E render screenshot" style="width: 100%;" />
+                        <img src="images/part2/wall-e_screenshot_3-18_14-30-1.png" alt="Wall-E render screenshot" style="width: 100%;" />
                         <figcaption>Wall-E</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="blob_screenshot_3-18_14-30-19.png" alt="Blob render screenshot" style="width: 100%;" />
+                        <img src="images/part2/blob_screenshot_3-18_14-30-19.png" alt="Blob render screenshot" style="width: 100%;" />
                         <figcaption>Blob</figcaption>
                     </td>
                 </tr>
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="CBlucy_screenshot_3-18_15-30-45.png" alt="Lucy render screenshot" style="width: 100%;" />
+                        <img src="images/part2/CBlucy_screenshot_3-18_15-30-45.png" alt="Lucy render screenshot" style="width: 100%;" />
                         <figcaption>Lucy</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="dragon_screenshot_3-18_14-30-55.png" alt="Dragon render screenshot" style="width: 100%;" />
+                        <img src="images/part2/dragon_screenshot_3-18_14-30-55.png" alt="Dragon render screenshot" style="width: 100%;" />
                         <figcaption>Dragon</figcaption>
                     </td>
                 </tr>
@@ -308,13 +308,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                     <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Max Planck</th>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/maxplancknaive.png" alt="Naive render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 75.8627 s</figcaption>
                         </figure>
                     </td>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/maxplanckbvh.png" alt="BVH render timing for the Max Planck scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 0.1238 s</figcaption>
                         </figure>
                     </td>
@@ -323,13 +323,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                     <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Bunny</th>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/bunnynaive.png" alt="Naive render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 36.7396 s</figcaption>
                         </figure>
                     </td>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/bunnybvh.png" alt="BVH render timing for the bunny scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 0.0836 s</figcaption>
                         </figure>
                     </td>
@@ -338,13 +338,13 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                     <th scope="row" style="padding: 12px; text-align: left; vertical-align: top;">Teapot</th>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/teapotnaive.png" alt="Naive render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 1.7434 s</figcaption>
                         </figure>
                     </td>
                     <td style="padding: 12px; vertical-align: top;">
                         <figure style="margin: 0;">
-                            <img src="teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
+                            <img src="images/part2/teapotbvh.png" alt="BVH render timing for the teapot scene" style="display: block; width: 100%; height: auto;" />
                             <figcaption style="margin-top: 8px;">Render time: 0.0745 s</figcaption>
                         </figure>
                     </td>
@@ -359,7 +359,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             The other significant point to note, however, is that the BVH construction time also scales with mesh size. The BVH construction times are not that noticeable with these meshes, but when rendering something like <code>wall-e.dae</code>...
         </p>
         <figure style="margin: 0;">
-            <img src="wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 50%; height: auto; margin: 0 auto" />
+            <img src="images/part2/wall-e-run.png" alt="BVH render timing for the wall-e scene" style="display: block; width: 50%; height: auto; margin: 0 auto" />
         </figure>
         <p>
             and we see that the BVH construction time dwarfs our rendering time by an order of magnitude!
@@ -443,11 +443,11 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         <table>
             <tr>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="bunny_hemisphere.png" alt="bunny_hemisphere screenshot" style="width: 100%;" />
+                    <img src="images/part3/bunny_hemisphere.png" alt="bunny_hemisphere screenshot" style="width: 100%;" />
                     <figcaption>Bunny hemispere</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="bunny_importance.png" alt="bunny importance screenshot" style="width: 100%;" />
+                    <img src="images/part3/bunny_importance.png" alt="bunny importance screenshot" style="width: 100%;" />
                     <figcaption>Bunny importance</figcaption>
                 </td>
             </tr>
@@ -459,21 +459,21 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             <table style="width: 100%; text-align: center; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_1_1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
+                        <img src="images/part3/bunny_1_1.png" alt="bunny_l1 screenshot" style="width: 100%;" />
                         <figcaption>Bunny with 1 Light Ray</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_1_4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
+                        <img src="images/part3/bunny_1_4.png" alt="bunny_l4 render screenshot" style="width: 100%;" />
                         <figcaption>Bunny with 4 Light Rays</figcaption>
                     </td>
                 </tr>
                 <tr>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_1_16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
+                        <img src="images/part3/bunny_1_16.png" alt="bunny_l16 render screenshot" style="width: 100%;" />
                         <figcaption>Bunny with 16 Light Rays</figcaption>
                     </td>
                     <td style="text-align: center; padding: 12px;">
-                        <img src="bunny_1_64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
+                        <img src="images/part3/bunny_1_64.png" alt="bunny_l64 render screenshot" style="width: 100%;" />
                         <figcaption>Bunny with 64 Light Rays</figcaption>
                     </td>
                 </tr>
@@ -501,282 +501,262 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             much cleaner render with the same settings soft shadows under the bunny are smooth and well-defined, color bleeding from the red and blue walls is more accurate, and the overall lighting looks physically correct. This difference arises because
             importance sampling guarantees every shadow ray is cast toward a light source, making each sample maximally informative, whereas hemisphere sampling wastes the vast majority of samples on directions that carry no direct lighting contribution.
             In short, importance sampling achieves the same visual quality as hemisphere sampling with far fewer samples, making it the clearly superior method for direct lighting estimation in scenes with small area lights.
-        </p>
-
-
-
-
-
-        <h2>Part 4: Global Illumination</h2>
+        </p>        <h2>Part 4: Global Illumination</h2>
         <p>
-            at_least_one_bounce_radiance recursively estimates indirect lighting. At each hit point, it first adds the direct lighting contribution via one_bounce_radiance (when accumulating bounces or at the first call). It then uses Russian Roulette with a continuation
-            probability of 0.7 to randomly decide whether to trace another bounce, this provides an unbiased way to terminate the recursion. If continuing, it calls sample_f to sample a new incoming direction using a cosine-weighted hemisphere distribution,
-            which returns the BSDF value, the sampled direction wi, and the pdf. A new ray is cast from the hit point in that direction with min_t = EPS_F to avoid self-intersection, and its depth is decremented by 1. If the new ray intersects the scene,
-            at_least_one_bounce_radiance is called recursively on the new intersection. The indirect contribution is accumulated as f * L_indirect * cos(theta) / (pdf * continuation_probability) to maintain an unbiased estimate.
+            We extended our Part 3 estimator into a recursive global-illumination integrator. All Part 4 images below are full-scene <code>640x480</code> renders rather than cropped window renders.
         </p>
 
+        <h3>Implementation Walkthrough</h3>
+        <p>
+            The starting point is the standard decomposition of outgoing radiance into emitted, direct, and indirect terms:
+        </p>
+        <p>
+            \[
+            L_o(x, \omega_o) = L_e(x, \omega_o) + L_{\text{direct}}(x, \omega_o) + L_{\text{indirect}}(x, \omega_o).
+            \]
+        </p>
+        <p>
+            Our top-level integrator follows that split directly. We first intersect the camera ray against the BVH, return environment radiance when nothing is hit, add emitted radiance at the primary hit, and then add the recursive bounce estimator if the ray still has depth remaining.
+        </p>
+        <pre><code>Vector3D PathTracer::est_radiance_global_illumination(const Ray &amp;r) {
+  Intersection isect;
+  Vector3D L_out;
 
+  if (!bvh-&gt;intersect(r, &amp;isect))
+    return envLight ? envLight-&gt;sample_dir(r) : L_out;
 
-        <h3>global Illumination</h3>
+  L_out = zero_bounce_radiance(r, isect);
 
-        <table>
-
-
-
-            <tr>
-                <td style="text-align: center; padding: 12px;">
-                    <img src="bunny_global_1024.png" style="width: 100%;" />
-                    <figcaption>Bunny global</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px;">
-                    <img src="CBbunny_global.png" style="width: 100%; " />
-                    <figcaption>CBunny global</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="spheres_global_1024.png" style="width: 100%; " />
-                    <figcaption>sphere global</figcaption>
-                </td>
-            </tr>
-        </table>
-        <table>
-
-
-
-            <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_direct_only.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
-                    <figcaption>Bunny Direct</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_indirect_only.png" style="width: 100%; " />
-                    <figcaption>Bunny indirect</figcaption>
-                </td>
-            </tr>
-        </table>
-
-        <h1>Ray Bounce Comparison: m=2 vs m=3</h1>
+  if (max_ray_depth &gt; 0) {
+    L_out += at_least_one_bounce_radiance(r, isect);
+  }
+  return L_out;
+}</code></pre>
+        <p>
+            Here, <code>zero_bounce_radiance</code> represents the emitted term <code>L_e</code>, while <code>at_least_one_bounce_radiance</code> is responsible for the transport beyond pure emission. This means Part 4 builds on top of Part 3 instead of replacing it.
+        </p>
 
         <p>
-            Looking at the two rendered images (bunny_m2.png and bunny_m3.png), both show the Stanford Bunny inside a Cornell Box, a classic scene with a white ceiling light, a red left wall, and a blue/purple right wall. The difference between the two is the maximum
-            ray bounce depth (m=2 vs m=3), and even subtle differences in shadow softness, color bleeding, and ambient fill reveal just how much each additional bounce contributes.
+            Inside the recursive helper, the indirect term is estimated with Monte Carlo sampling over the BSDF. In integral form, the bounced contribution is
         </p>
-        <table>
+        <p>
+            \[
+            L_{\text{indirect}}(x, \omega_o) = \int_{H^2} f_r(x, \omega_i, \omega_o)\,L_o(x', -\omega_i)\,|\cos \theta_i|\,d\omega_i.
+            \]
+        </p>
+        <p>
+            After sampling one direction from the BSDF, our one-sample estimator becomes
+        </p>
+        <p>
+            \[
+            \widehat{L}_{\text{indirect}} = \frac{f_r(x, \omega_i, \omega_o)\,L_o(x', -\omega_i)\,|\cos \theta_i|}{p(\omega_i)\,p_{rr}},
+            \]
+        </p>
+        <p>
+            where <code>p(omega_i)</code> is the BSDF sampling density and <code>p_rr = 0.7</code> is the Russian roulette survival probability. That estimator appears almost verbatim in our recursive implementation.
+        </p>
+        <pre><code>Vector3D PathTracer::at_least_one_bounce_radiance(const Ray &amp;r,
+                                                  const Intersection &amp;isect) {
+  Matrix3x3 o2w;
+  make_coord_space(o2w, isect.n);
+  Matrix3x3 w2o = o2w.T();
 
+  Vector3D hit_p = r.o + r.d * isect.t;
+  Vector3D w_out = w2o * (-r.d);
+  Vector3D L_out(0, 0, 0);
 
+  if (isAccumBounces || r.depth == 1) {
+    L_out += one_bounce_radiance(r, isect);
+  }
+  if (r.depth &lt;= 1) return L_out;
 
+  double ppdf = 0.7;
+  if (!coin_flip(ppdf)) return L_out;
+
+  Vector3D w_obj;
+  double pdf;
+  Vector3D f = isect.bsdf-&gt;sample_f(w_out, &amp;w_obj, &amp;pdf);
+  if (pdf == 0) return L_out;
+
+  Vector3D w_world = o2w * w_obj;
+  Ray next_ray(hit_p, w_world);
+  next_ray.min_t = EPS_F;
+  next_ray.depth = r.depth - 1;
+
+  Intersection nxt_isect;
+  if (bvh-&gt;intersect(next_ray, &amp;nxt_isect)) {
+    Vector3D incoming = at_least_one_bounce_radiance(next_ray, nxt_isect);
+    if (isect.bsdf-&gt;is_delta()) {
+      incoming += zero_bounce_radiance(next_ray, nxt_isect);
+    }
+    L_out += f * incoming * abs_cos_theta(w_obj) / (pdf * ppdf);
+  }
+  return L_out;
+}</code></pre>
+        <p>
+            Several details matter here. We sample the BSDF in the local shading frame, so the outgoing direction is converted with \( \omega_o^{\text{local}} = T^{-1}(-r.d) \), the sampled incoming direction is mapped back with \( \omega_i^{\text{world}} = T\,\omega_i^{\text{local}} \), and the cosine term is accumulated as <code>abs_cos_theta(w_obj)</code>. The <code>next_ray.min_t = EPS_F</code> line prevents self-intersections, and the explicit <code>bvh-&gt;intersect(next_ray, &amp;nxt_isect)</code> test ensures that recursion only continues when a real scene hit exists.
+        </p>
+
+        <p>
+            Russian roulette keeps the recursion unbiased. If a random variable <code>X</code> represents the surviving bounce contribution, then
+        </p>
+        <p>
+            \[
+            \mathbb{E}\left[\frac{\mathbf{1}_{\text{survive}}}{p_{rr}} X\right] = \mathbb{E}[X].
+            \]
+        </p>
+        <p>
+            In practice, this means long low-energy paths can terminate early, while the surviving paths are reweighted by <code>1 / ppdf</code> so the estimator still converges to the correct value.
+        </p>
+
+        <p>
+            The delta-material case needs one more correction. For mirror and glass paths, the next hit may be an emissive light mesh. At that point the radiance arriving from the next vertex is
+        </p>
+        <p>
+            \[
+            L_o(x', -\omega_i) = L_e(x', -\omega_i) + L_{\text{bounce}}(x', -\omega_i).
+            \]
+        </p>
+        <p>
+            Our recursive helper naturally returns the bounced term, but not the emitted term at that recursive hit, so the delta branch explicitly adds <code>zero_bounce_radiance(next_ray, nxt_isect)</code>. That is what makes light sources show up correctly in specular reflections and refractions.
+        </p>
+
+        <h3>Global Illumination, 1024 Samples Per Pixel</h3>
+        <p>
+            The four images below were rendered with our current implementation at <code>640x480</code> and <code>1024</code> samples per pixel.
+        </p>
+        <table style="width: 100%; table-layout: fixed;">
             <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_m2.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
-                    <figcaption>Bunny m2</figcaption>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/global/p4_global_cbbunny_1024_full.png" style="width: 100%; display: block;" />
+                    <figcaption>CBbunny.dae, 640x480, 1024 spp</figcaption>
                 </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_m3.png" alt=" render screenshot " style="width: 100%; " />
-                    <figcaption>Bunny m3</figcaption>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/global/p4_global_cbdragon_microfacet_au_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBdragon_microfacet_au.dae, 640x480, 1024 spp</figcaption>
                 </td>
             </tr>
         </table>
-
-
-        <div class="section ">
-            <h2>The 2nd Bounce of Light</h2>
-            <p>
-                The second bounce is where indirect illumination begins in earnest. After a ray from the camera hits the bunny and bounces once to a wall (1st bounce), the 2nd bounce carries that light back onto the scene geometry.
-            </p>
-            <ul>
-                <li><strong>Color bleeding:</strong> The red left wall and blue right wall cast their hues onto the bunny's sides and the floor beneath it. This is entirely a 2nd-bounce phenomenon, direct illumination alone (1 bounce) would render the bunny
-                    in flat, neutral white with hard shadows.</li>
-                <li><strong>Soft ambient fill:</strong> The underside of the bunny and the shadowed regions on the floor are no longer fully black. Light that bounced off the floor or walls fills these areas with a dim, warm glow.</li>
-                <li><strong>Ceiling illumination:</strong> The ceiling away from the light source picks up faint scattered light that first hit the walls, which then bounces up.</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>The 3rd Bounce of Light</h2>
-            <p>
-                The third bounce refines and deepens the realism:
-            </p>
-            <ul>
-                <li><strong>Deeper color bleeding:</strong> Red/blue hues penetrate further into the scene, the back wall and bunny's rear pick up more saturation because light has had an extra opportunity to scatter between surfaces.</li>
-                <li><strong>Softer shadow transitions:</strong> The contact shadow beneath the bunny transitions more gradually, as inter-reflected light fills the penumbra more completely.</li>
-                <li><strong>Brightening of occluded regions:</strong> Concave areas of the bunny (between the ears, the belly crease near the floor) appear slightly brighter than in the m=2 render, because multi-bounce light can "reach around " occluders
-                    more effectively.</li>
-                <li><strong>Energy conservation accuracy:</strong> Physically, light does bounce many times before being absorbed. Cutting off at m=2 loses a measurable portion of total scene radiance; m=3 recovers a meaningful fraction of that energy.</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>Why This Matters vs. Rasterization</h2>
-            <table>
-                <tr>
-                    <th>Feature</th>
-                    <th>Rasterization</th>
-                    <th>Path Tracing (m ≥ 2)</th>
-                </tr>
-                <tr>
-                    <td>Direct lighting</td>
-                    <td>Fast, approximate</td>
-                    <td>Accurate</td>
-                </tr>
-                <tr>
-                    <td>Soft shadows</td>
-                    <td>Requires shadow maps (aliased)</td>
-                    <td>Naturally emerges from area light sampling</td>
-                </tr>
-                <tr>
-                    <td>Color bleeding</td>
-                    <td>Requires baked lightmaps or screen-space hacks</td>
-                    <td>Physically accurate, automatic</td>
-                </tr>
-                <tr>
-                    <td>Ambient light</td>
-                    <td>Fake constant term (ambient occlusion at best)</td>
-                    <td>Emerges from indirect bounces</td>
-                </tr>
-                <tr>
-                    <td>Inter-reflections</td>
-                    <td>Not possible without costly tricks</td>
-                    <td>Free with additional bounces</td>
-                </tr>
-            </table>
-        </div>
-
-        <p>With 1024 samples per pixel, the Monte Carlo estimator has enough samples to converge the indirect illumination integrals with low variance, meaning the color bleeding and soft shadowing appear clean rather than noisy. At lower sample counts (e.g.
-            4 or 16 spp), the 2nd and 3rd bounce contributions would show high noise precisely in those subtle indirect regions, demonstrating that they are genuinely being computed stochastically rather than approximated.</p>
-
-        <table>
-
+        <table style="width: 100%; table-layout: fixed;">
             <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m0.png " style="width: 100%; " />
-                    <figcaption>CBunny accumulated0</figcaption>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/global/p4_global_cblucy_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBlucy.dae, 640x480, 1024 spp</figcaption>
                 </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m1.png" style="width: 100%; " />
-                    <figcaption>CBunny accumulated1</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m2.png" style="width: 100%; " />
-                    <figcaption>CBunny accumulated2</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m3.png" style="width: 100%; " />
-                    <figcaption>CBunny accumulated3</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m4.png" style="width: 100%; " />
-                    <figcaption>CBunny accumulated4</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_accum_m5.png" style="width: 100%; " />
-                    <figcaption>CBunny accumulated5</figcaption>
-                </td>
-
-            </tr>
-        </table>
-
-
-        <table>
-
-            <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m0.png" alt="bunny_l16 render screenshot " style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated0</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m1.png " style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated1</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m2.png" style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated2</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m3.png" style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated3</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m4.png" style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated4</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_unaccum_m5.png" style="width: 100%; " />
-                    <figcaption>CBunny unaccumulated5</figcaption>
-                </td>
-
-            </tr>
-        </table>
-
-        <h2>Accumulated vs Unaccumulated Bounces</h2>
-
-        <p><strong>m=0:</strong> Both accumulated and unaccumulated show only the ceiling light. Nothing to accumulate yet, emission only.</p>
-
-        <p><strong>m=1:</strong> Both show only directly lit surfaces with hard black shadows and no color bleeding. Unaccumulated isolates just the direct light contribution; accumulated adds it on top of m=0 emission.</p>
-
-        <p><strong>m=2:</strong> The unaccumulated image is dim but reveals color bleeding for the first time, red and blue hues appear on the bunny's flanks from the walls, and shadowed areas receive faint fill. The accumulated image looks noticeably more
-            realistic than m=1, with soft shadows and visible color on the bunny. This is the biggest perceptual jump of any single bounce.</p>
-
-        <p><strong>m=3:</strong> The unaccumulated image is dimmer than m=2. Less energy survives each bounce,but fills in deeply occluded areas like the belly crease and between the ears. The accumulated image is subtly improved over m=2: contact shadows
-            soften further and the back wall brightens slightly.</p>
-
-        <p><strong>m=4:</strong> The unaccumulated image is nearly black with only faint uniform fill remaining. The accumulated image is almost indistinguishable from m=3, diminishing returns are clear.</p>
-
-        <p><strong>m=5:</strong> The unaccumulated image is essentially black. The accumulated image is perceptually identical to m=4. The scene has fully converged, additional bounces contribute negligible energy.</p>
-
-
-
-
-
-
-
-
-        <h2>Russian Roulette: m=0,1,2,3,4,100</h2>
-
-        <table>
-
-
-
-            <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m0.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering0</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m1.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering1</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m2.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering2</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m3.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering 3</figcaption>
-                </td>
-
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m4.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering4</figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="bunny_rr_m100.png" style="width: 100%; " />
-                    <figcaption>Russian Roulette rendering100</figcaption>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/global/p4_global_cbspheres_lambertian_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBspheres_lambertian.dae, 640x480, 1024 spp</figcaption>
                 </td>
             </tr>
         </table>
+        <p>
+            The bunny remains the clearest diffuse reference for indirect color bleeding: the red and blue walls tint the shadowed sides of the model and the floor. The microfacet dragon adds glossy multi-bounce behavior, so the gold surface picks up both direct highlights and softer reflected illumination from the Cornell box. Lucy shows the same global-illumination pipeline working through refractive transport, where reflected and transmitted light both contribute to the statue. The spheres scene gives a compact comparison case where indirect illumination is visible on the floor, the walls, and both sphere silhouettes.
+        </p>
 
-        <p><strong>m=0:</strong> Only the ceiling light is visible. No rays bounce, so no surface is illuminated.</p>
+        <h3>Direct Illumination vs. Indirect Illumination</h3>
+        <p>
+            In our current integrator, the direct-only image is exactly the same as the <code>m = 1</code> case, because a ray with depth 1 accumulates zero-bounce emission plus one-bounce direct lighting and then returns before spawning any extra bounce. For the indirect-only image, we temporarily inserted a clearly marked <code>PART4_TEMP_RENDER_MODE</code> switch around the primary emitted and direct terms, rendered one image, and then removed that switch immediately afterward.
+        </p>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/direct-indirect/p4_cbbunny_direct_1024_full.png" style="width: 100%; display: block;" />
+                    <figcaption>CBbunny direct illumination only, 640x480, 1024 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/direct-indirect/p4_cbbunny_indirect_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBbunny indirect illumination only, 640x480, 1024 spp</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>
+            The direct-only image keeps the strongest contribution from the area light: the bunny is lit from above, the floor shadow is well defined, and most of the visual structure comes from direct visibility to the light source. In the indirect-only image, those directly lit regions disappear and the scene is carried almost entirely by bounce lighting. That makes the box dimmer overall, lifts the shadowed regions, and makes the wall color bleeding much easier to isolate visually.
+        </p>
 
-        <p><strong>m=1:</strong> Direct illumination only. Hard black shadows, no color bleeding.</p>
+        <h3>Effect of Max Ray Depth on CBbunny.dae</h3>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/max-depth/p4_cbbunny_m0_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 0</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/max-depth/p4_cbbunny_m1_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 1</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/max-depth/p4_cbbunny_m2_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 2</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/max-depth/p4_cbbunny_m3_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 3</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/max-depth/p4_cbbunny_m100_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 100</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>
+            With <code>m = 0</code>, only emitted light is visible, so the light source itself dominates and almost the rest of the box is black. At <code>m = 1</code>, the image becomes a pure direct-lighting render. The largest perceptual jump occurs at <code>m = 2</code>, where the first indirect bounce introduces clear wall-color bleeding and lifts the dark floor region under the bunny. The jump from <code>m = 2</code> to <code>m = 3</code> is much smaller because the second indirect bounce contributes less energy. By <code>m = 100</code>, the image is only slightly different from the lower converged depths because Russian roulette has already made deeper paths rare and properly reweighted.
+        </p>
 
-        <p><strong>m=2:</strong> First indirect bounce added. Color bleeding from red/blue walls appears on the bunny. Shadows begin to fill.</p>
+        <h3>Sample Count Comparison on CBbunny.dae</h3>
+        <p>
+            These images use 4 light rays and increasing camera-sample counts. The Monte Carlo variance decreases like
+        </p>
+        <p>
+            \[
+            \mathrm{Var}[\hat{L}_N] = \frac{\sigma^2}{N}, \qquad \sigma_{\hat{L}_N} \propto \frac{1}{\sqrt{N}},
+            \]
+        </p>
+        <p>
+            so every 4x increase in samples should reduce the visible standard deviation by about 2x.
+        </p>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp1.png" style="width: 100%; display: block;" />
+                    <figcaption>1 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp2.png" style="width: 100%; display: block;" />
+                    <figcaption>2 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp4.png" style="width: 100%; display: block;" />
+                    <figcaption>4 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp8.png" style="width: 100%; display: block;" />
+                    <figcaption>8 spp</figcaption>
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp16.png" style="width: 100%; display: block;" />
+                    <figcaption>16 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp64.png" style="width: 100%; display: block;" />
+                    <figcaption>64 spp</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/spp/p4_cbbunny_spp1024.png" style="width: 100%; display: block;" />
+                    <figcaption>1024 spp</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>
+            At 1 and 2 samples per pixel, the bunny and the shadowed floor are dominated by high-frequency Monte Carlo noise. At 4 and 8 samples, the overall shape is already readable, but the soft shadow boundary and the indirect wall tint are still unstable. At 16 samples, the lighting pattern starts to settle down, while 64 samples removes most of the distracting grain. By 1024 samples, the image is close to converged for this resolution and the remaining error is small compared to the low-sample cases.
+        </p>
 
-        <p><strong>m=3:</strong> Second indirect bounce. Deeper shadow fill, slightly more saturated color bleeding, occluded crevices brighten.</p>
 
-        <p><strong>m=4:</strong> Third indirect bounce. Nearly visually identical to m=3. Diminishing returns are clear: the energy surviving each additional Lambertian bounce is a shrinking fraction of the original.</p>
 
-        <p><strong>m=100:</strong> With Russian Roulette, this looks nearly identical to m=4 or m=5 despite allowing up to 100 bounces. This demonstrates that Russian Roulette correctly terminates low-energy paths early in an unbiased way. Most paths are
-            terminated by m=4 or 5 because the continuation probability (0.7 in your code) means surviving to bounce 10 has only a 0.7<sup>10</sup> &asymp; 2.8% chance. The rare deep paths are upweighted by 1/pdf to keep the estimator unbiased, and the
-            result converges to the same value as a fixed high depth without the computational cost.</p>
+
 
 
         <h2>Part 5: Adaptive Sampling</h2>
@@ -855,12 +835,12 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         <table>
             <tr>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBdragon_rate.png" style="width: 100%; " />
+                    <img src="images/part5/CBdragon_rate.png" style="width: 100%; " />
                     <figcaption>noise free render CBdragon.dae
                     </figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBdragon.png" style="width: 100%; " />
+                    <img src="images/part5/CBdragon.png" style="width: 100%; " />
                     <figcaption>sample rate image CBdragon.dae
                     </figcaption>
                 </td>
@@ -873,11 +853,11 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         <table>
             <tr>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBspheres_lambertian.png" style="width: 100%; " />
+                    <img src="images/part5/CBspheres_lambertian.png" style="width: 100%; " />
                     <figcaption>Noise free render CBspheres_lambertian.dae </figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="CBspheres_lambertian_rate.png" style="width: 100%; " />
+                    <img src="images/part5/CBspheres_lambertian_rate.png" style="width: 100%; " />
                     <figcaption>sample rate image CBspheres_lambertian.dae </figcaption>
                 </td>
             </tr>

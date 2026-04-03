@@ -594,7 +594,7 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
   return L_out;
 }</code></pre>
         <p>
-            Several details matter here. We sample the BSDF in the local shading frame, so the outgoing direction is converted with \( \omega_o^{\text{local}} = T^{-1}(-r.d) \), the sampled incoming direction is mapped back with \( \omega_i^{\text{world}} = T\,\omega_i^{\text{local}} \), and the cosine term is accumulated as <code>abs_cos_theta(w_obj)</code>. The <code>next_ray.min_t = EPS_F</code> line prevents self-intersections, and the explicit <code>bvh-&gt;intersect(next_ray, &amp;nxt_isect)</code> test ensures that recursion only continues when a real scene hit exists.
+            We sample the BSDF in the local shading frame, so the outgoing direction is converted with \( \omega_o^{\text{local}} = T^{-1}(-r.d) \), the sampled incoming direction is mapped back with \( \omega_i^{\text{world}} = T\,\omega_i^{\text{local}} \), and the cosine term is accumulated as <code>abs_cos_theta(w_obj)</code>. The <code>next_ray.min_t = EPS_F</code> line prevents self-intersections, and the explicit <code>bvh-&gt;intersect(next_ray, &amp;nxt_isect)</code> test ensures that recursion only continues when a real scene hit exists.
         </p>
 
         <p>
@@ -632,8 +632,8 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                     <figcaption>CBbunny.dae, 640x480, 1024 spp</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/global/p4_global_cbdragon_microfacet_au_1024.png" style="width: 100%; display: block;" />
-                    <figcaption>CBdragon_microfacet_au.dae, 640x480, 1024 spp</figcaption>
+                    <img src="images/part4/global/p4_global_cbspheres_lambertian_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBspheres_lambertian.dae, 640x480, 1024 spp</figcaption>
                 </td>
             </tr>
         </table>
@@ -644,8 +644,8 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
                     <figcaption>CBlucy.dae, 640x480, 1024 spp</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/global/p4_global_cbspheres_lambertian_1024.png" style="width: 100%; display: block;" />
-                    <figcaption>CBspheres_lambertian.dae, 640x480, 1024 spp</figcaption>
+                    <img src="images/part4/global/p4_global_cbdragon_microfacet_au_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>CBdragon_microfacet_au.dae, 640x480, 1024 spp</figcaption>
                 </td>
             </tr>
         </table>
@@ -670,36 +670,101 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             </tr>
         </table>
         <p>
-            The direct-only image keeps the strongest contribution from the area light: the bunny is lit from above, the floor shadow is well defined, and most of the visual structure comes from direct visibility to the light source. In the indirect-only image, those directly lit regions disappear and the scene is carried almost entirely by bounce lighting. That makes the box dimmer overall, lifts the shadowed regions, and makes the wall color bleeding much easier to isolate visually.
+            The direct-only image keeps the strongest contribution from the area light: the bunny is lit from above, the floor shadow is well defined. 
+            Most of the visual structure comes from direct visibility to the light source. 
+            In the indirect-only image, those directly lit regions disappear and the scene is illuminated entirely by bounce lighting. 
+            This makes the box darker overall, lifts the shadowed regions, and shows color bleeding from the walls.
         </p>
 
-        <h3>Effect of Max Ray Depth on CBbunny.dae</h3>
+        <h3>Accumulated and Unaccumulated Bounces on CBbunny.dae</h3>
+        <p>
+            These renders all use <code>640x480</code>, <code>1024</code> samples per pixel, and 4 light samples. With <code>-o 0</code>, the renderer shows only the <code>m</code>th bounce contribution. With <code>-o 1</code>, it accumulates every contribution from bounce 0 through bounce <code>m</code>.
+        </p>
+        <p><strong>Unaccumulated bounces (<code>-o 0</code>)</strong></p>
         <table style="width: 100%; table-layout: fixed;">
             <tr>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/max-depth/p4_cbbunny_m0_1024.png" style="width: 100%; display: block;" />
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m0_1024.png" style="width: 100%; display: block;" />
                     <figcaption>m = 0</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/max-depth/p4_cbbunny_m1_1024.png" style="width: 100%; display: block;" />
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m1_1024.png" style="width: 100%; display: block;" />
                     <figcaption>m = 1</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/max-depth/p4_cbbunny_m2_1024.png" style="width: 100%; display: block;" />
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m2_1024.png" style="width: 100%; display: block;" />
                     <figcaption>m = 2</figcaption>
                 </td>
+            </tr>
+        </table>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/max-depth/p4_cbbunny_m3_1024.png" style="width: 100%; display: block;" />
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m3_1024.png" style="width: 100%; display: block;" />
                     <figcaption>m = 3</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px;">
-                    <img src="images/part4/max-depth/p4_cbbunny_m100_1024.png" style="width: 100%; display: block;" />
-                    <figcaption>m = 100</figcaption>
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m4_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 4</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px;">
+                    <img src="images/part4/bounces/p4_cbbunny_unaccum_m5_1024.png" style="width: 100%; display: block;" />
+                    <figcaption>m = 5</figcaption>
                 </td>
             </tr>
         </table>
         <p>
-            With <code>m = 0</code>, only emitted light is visible, so the light source itself dominates and almost the rest of the box is black. At <code>m = 1</code>, the image becomes a pure direct-lighting render. The largest perceptual jump occurs at <code>m = 2</code>, where the first indirect bounce introduces clear wall-color bleeding and lifts the dark floor region under the bunny. The jump from <code>m = 2</code> to <code>m = 3</code> is much smaller because the second indirect bounce contributes less energy. By <code>m = 100</code>, the image is only slightly different from the lower converged depths because Russian roulette has already made deeper paths rare and properly reweighted.
+            The <code>m = 2</code> image is the first indirect bounce by itself. 
+            We can see red and blue wall light re-enter the box and brighten the underside of the bunny. 
+            The <code>m = 3</code> image isolates the second indirect bounce. 
+            It is weaker than <code>m = 2</code>, but it spreads that bounced color farther through the box and fills in the shadowed regions more evenly. 
+            Higher isolated bounces continue the same trend, but each one contributes less energy than the last.
+        </p>
+        <p><strong>Accumulated vs. unaccumulated comparison</strong></p>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Mode</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 0</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 1</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 2</strong></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Accumulated</strong></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m0_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m1_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m2_1024.png" style="width: 100%; display: block;" /></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Unaccumulated</strong></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m0_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m1_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m2_1024.png" style="width: 100%; display: block;" /></td>
+            </tr>
+        </table>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Mode</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 3</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 4</strong></td>
+                <td style="text-align: center; padding: 12px;"><strong>m = 5</strong></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Accumulated</strong></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m3_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m4_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_accum_m5_1024.png" style="width: 100%; display: block;" /></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding: 12px;"><strong>Unaccumulated</strong></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m3_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m4_1024.png" style="width: 100%; display: block;" /></td>
+                <td style="text-align: center; padding: 12px;"><img src="images/part4/bounces/p4_cbbunny_unaccum_m5_1024.png" style="width: 100%; display: block;" /></td>
+            </tr>
+        </table>
+        <p>
+            The accumulated sequence shows how those isolated bounce terms build the final image and the unaccumulated images show the relative contribution of each bounce.
+            <code>m = 1</code> is the pure direct-lighting baseline, <code>m = 2</code> adds the most noticeable improvement.
+            The first indirect bounce introduces visible color bleeding, and <code>m = 3</code> through <code>m = 5</code> make progressively smaller corrections.
         </p>
 
         <h3>Sample Count Comparison on CBbunny.dae</h3>
@@ -736,18 +801,20 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
         </table>
         <table style="width: 100%; table-layout: fixed;">
             <tr>
-                <td style="text-align: center; padding: 12px;">
+                <td style="width: 12.5%; padding: 0;"></td>
+                <td style="width: 25%; text-align: center; padding: 12px;">
                     <img src="images/part4/spp/p4_cbbunny_spp16.png" style="width: 100%; display: block;" />
                     <figcaption>16 spp</figcaption>
                 </td>
-                <td style="text-align: center; padding: 12px;">
+                <td style="width: 25%; text-align: center; padding: 12px;">
                     <img src="images/part4/spp/p4_cbbunny_spp64.png" style="width: 100%; display: block;" />
                     <figcaption>64 spp</figcaption>
                 </td>
-                <td style="text-align: center; padding: 12px;">
+                <td style="width: 25%; text-align: center; padding: 12px;">
                     <img src="images/part4/spp/p4_cbbunny_spp1024.png" style="width: 100%; display: block;" />
                     <figcaption>1024 spp</figcaption>
                 </td>
+                <td style="width: 12.5%; padding: 0;"></td>
             </tr>
         </table>
         <p>

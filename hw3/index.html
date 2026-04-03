@@ -830,39 +830,46 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
 
 
         <p>
-            Standard path tracing uses a fixed number of samples per pixel regardless of visual complexity. Adaptive sampling improves efficiency by detecting when a pixel has statistically converged and stopping early, spending more samples only where they are genuinely
-            needed, such as shadow boundaries and complex indirect lighting, and fewer on flat diffuse surfaces.
+            Adaptive sampling lets our renderer stop sampling a pixel once its Monte Carlo estimate is statistically stable instead of always spending the full sample budget everywhere. In our implementation, that means flat regions of the image can terminate early while shadow boundaries, glossy transport, and strong indirect-lighting gradients keep receiving more samples.
         </p>
 
         <div class="section">
             <h2>Convergence Test</h2>
 
-            <p>For each pixel, we track two running sums over the per-sample luminance values:</p>
+            <p>For each pixel, we keep two running sums over the scalar luminance samples returned by <code>rad.illum()</code>:</p>
 
-            <div class="equation ">
-                s1 = Σ xₖ &nbsp;&nbsp;&nbsp;&nbsp; s2 = Σ xₖ²
-            </div>
+            <p>
+                \[
+                s_1 = \sum_{k=1}^{n} x_k \qquad s_2 = \sum_{k=1}^{n} x_k^2
+                \]
+            </p>
 
-            <p>From these we compute the mean and variance:</p>
+            <p>From these, our code estimates the sample mean and sample variance as</p>
 
-            <div class="equation ">
-                μ = s1 / n &nbsp;&nbsp;&nbsp;&nbsp; σ² = (1 / (n - 1)) (s2 - (s1² / n))
-            </div>
+            <p>
+                \[
+                \mu = \frac{s_1}{n} \qquad \sigma^2 = \frac{1}{n - 1}\left(s_2 - \frac{s_1^2}{n}\right)
+                \]
+            </p>
 
-            <p>And the 95% confidence interval half-width:</p>
+            <p>and then computes the half-width of a 95% confidence interval:</p>
 
-            <div class="equation ">
-                I = 1.96 · (σ / √n)
-            </div>
+            <p>
+                \[
+                I = 1.96 \cdot \frac{\sigma}{\sqrt{n}}
+                \]
+            </p>
 
             <p>The pixel is declared converged when:</p>
 
-            <div class="equation ">
-                I ≤ maxTolerance · μ
-            </div>
+            <p>
+                \[
+                I \leq \text{maxTolerance} \cdot \mu
+                \]
+            </p>
 
             <p>
-                This is a relative threshold, a bright pixel can tolerate more absolute variance than a near-black one, naturally matching human visual perception.
+                This is exactly the stopping rule in our current <code>raytrace_pixel(...)</code> implementation. A large variance or a very small mean keeps the confidence interval wide, so the renderer continues sampling. Smooth diffuse regions converge quickly, while contact shadows and complex reflected light stay active much longer.
             </p>
         </div>
 
@@ -870,69 +877,66 @@ node->r = construct_bvh(mid, end, max_leaf_size);</code></pre>
             <h2>Implementation</h2>
 
             <p>
-                For each pixel, we loop up to <code>num_samples</code> times, accumulating radiance and tracking running statistics. Every <code>samplesPerBatch</code> (16) samples we check the convergence condition and break early if met:
+                Our implementation uses the command-line parameters <code>-a samplesPerBatch maxTolerance</code>. For the renders below, we used <code>-s 2048 -a 32 0.05 -l 1 -m 5</code>, so every pixel is tested for convergence after each batch of 32 camera samples.
             </p>
 
-            <pre>
-	initialize s1, s2, m = 0
-	
-	for each sample up to num_samples:
-		generate jittered camera ray through pixel
-		trace ray → get radiance
-	
-		accumulate radiance into L_out
-		compute luminance of sample → illum
-		update s1 += illum, s2 += illum²
-		m++
-	
-		if m is a multiple of samplesPerBatch:
-			compute mean, variance, and I from s1, s2, m
-			if I ≤ maxTolerance × mean → break (converged)
-	
-	write L_out / m to pixel
-	write m to sampleCountBuffer
-			</pre>
+            <pre><code>double s1 = 0.0, s2 = 0.0;
+int m = 0;
+
+for (int i = 0; i &lt; ns_aa; i++) {
+  Vector3D rad = est_radiance_global_illumination(ray);
+  double illum = rad.illum();
+
+  L_out += rad;
+  s1 += illum;
+  s2 += illum * illum;
+  m++;
+
+  if (m % samplesPerBatch == 0) {
+    double mean = s1 / m;
+    double var = (s2 - (s1 * s1) / m) / (m - 1);
+    double tol = 1.96 * sqrt(var / m);
+    if (tol &lt;= maxTolerance * mean) break;
+  }
+}
+
+sampleBuffer.update_pixel(L_out / m, x, y);
+sampleCountBuffer[x + y * sampleBuffer.w] = m;</code></pre>
 
             <p>
-                We use luminance as the convergence scalar rather than per-channel RGB, reducing the measurement to a single perceptually weighted value. The actual sample count <code>m</code> is stored in <code>sampleCountBuffer</code>, which drives
-                the false-color sample rate image, blue pixels converged early with few samples, while red pixels required close to the full 2048 samples.
+                The sample count stored in <code>sampleCountBuffer</code> is later normalized by <code>ns_aa</code> and converted into the false-color rate image. In our renderer, blue means a pixel used a small fraction of the 2048-sample budget, green means a medium sampling rate, and red means the pixel needed close to the full budget.
             </p>
         </div>
 
-        <table>
+        <table style="width: 100%; table-layout: fixed;">
             <tr>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="images/part5/CBdragon_rate.png" style="width: 100%; " />
-                    <figcaption>noise free render CBdragon.dae
-                    </figcaption>
+                    <img src="images/part5/p5_cbbunny_adaptive_2048.png" style="width: 100%; display: block;" />
+                    <figcaption>Adaptive render result, CBbunny.dae, 640x480, 2048 spp, 1 light sample, m = 5</figcaption>
                 </td>
                 <td style="text-align: center; padding: 12px; ">
-                    <img src="images/part5/CBdragon.png" style="width: 100%; " />
-                    <figcaption>sample rate image CBdragon.dae
-                    </figcaption>
+                    <img src="images/part5/p5_cbbunny_adaptive_2048_rate.png" style="width: 100%; display: block;" />
+                    <figcaption>Sampling rate image, CBbunny.dae</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>
+            In the bunny scene, most of the ceiling, the broad floor regions, and the smooth back wall converge quickly and appear blue or blue-cyan in the rate map. The sampling demand rises around the bunny silhouette, the contact shadow under the model, and the colored indirect-lighting transitions near the side walls, which show up as green and red. That matches the current estimator: those are the places where indirect transport changes fastest from pixel to pixel, so the confidence interval shrinks more slowly.
+        </p>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="images/part5/p5_cbdragon_adaptive_2048.png" style="width: 100%; display: block;" />
+                    <figcaption>Adaptive render result, CBdragon.dae, 640x480, 2048 spp, 1 light sample, m = 5</figcaption>
+                </td>
+                <td style="text-align: center; padding: 12px; ">
+                    <img src="images/part5/p5_cbdragon_adaptive_2048_rate.png" style="width: 100%; display: block;" />
+                    <figcaption>Sampling rate image, CBdragon.dae</figcaption>
                 </td>
             </tr>
 
         </table>
-        <p>The dragon is rendered against the Cornell Box with soft indirect lighting from the colored walls. In the sample rate image, the walls and ceiling are solidly red, again reflecting the difficulty of resolving indirect illumination in enclosed
-            colored environments. The dragon's body is blue, meaning its relatively uniform dark surface converges quickly with few samples. The floor beneath and around the dragon shows red/orange hotspots at the shadow contact regions, where the soft
-            shadow boundary requires many samples to resolve cleanly. The transition zones around the dragon show green/yellow, indicating intermediate sampling rates.</p>
-        <table>
-            <tr>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="images/part5/CBspheres_lambertian.png" style="width: 100%; " />
-                    <figcaption>Noise free render CBspheres_lambertian.dae </figcaption>
-                </td>
-                <td style="text-align: center; padding: 12px; ">
-                    <img src="images/part5/CBspheres_lambertian_rate.png" style="width: 100%; " />
-                    <figcaption>sample rate image CBspheres_lambertian.dae </figcaption>
-                </td>
-            </tr>
-
-        </table>
-		<p>The two spheres are rendered cleanly with soft shadows and color bleeding from the red and blue walls. In the sample rate image, the walls and ceiling are almost entirely red, requiring close to the full 2048 samples, these regions receive complex indirect illumination that bounces between the colored walls and spheres and is slow to converge. The spheres themselves are also red/orange, particularly near their shadow terminators and contact shadows on the floor where lighting varies sharply. The floor away from the spheres is blue-green, converging quickly as it receives relatively uniform direct and indirect light.
-		</p>
-    
+        <p>The dragon scene produces a broader spread into green and red because the mirror dragon and the surrounding soft shadow boundaries create more difficult light transport. The walls and the floor directly around the dragon require more samples than the smoother empty regions of the Cornell box, and the mirrored highlights on the dragon keep more pixels near the high-sample end of the scale. Compared to the bunny scene, this rate image spends visibly more area near the red end because specular transport and sharp shadow transitions are harder for the current adaptive estimator to certify early.</p>
     </div>
 </body>
 

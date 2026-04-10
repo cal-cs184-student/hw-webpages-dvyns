@@ -183,8 +183,70 @@
 
 
         <h2>Part 3: Handling collisions with other objects</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-        in reprehenderit in voluptate velit esse cillum dolore eu fugiat -' nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h2>Sphere Collisions</h2>
+        <p>
+            For sphere collisions, each point mass is tested by computing the distance from the sphere's origin to the point mass's current position. If this distance is less than the sphere's radius, the point mass has penetrated the sphere and needs to be pushed
+            back out.
+        </p>
+        <p>
+            The tangent point is computed by extending the ray from the origin through the point mass position to land exactly on the sphere surface. A correction vector is computed from the point mass's last position to this tangent point and applied scaled by (1
+            - friction).
+        </p>
+
+        <h2>Plane Collisions</h2>
+        <p>
+            For plane collisions, each point mass is tested by computing the signed distances of its current and last positions from the plane using the dot product with the plane normal. If the signs differ, the point mass has crossed the plane between timesteps.
+        </p>
+        <p>
+            The tangent point on the plane surface is computed and nudged by a small
+            <strong>SURFACE_OFFSET</strong> in the normal direction to prevent clipping. The correction is applied from the last position to the offset tangent point, scaled by (1 - friction).
+        </p>
+
+        <h2>Sphere ks Comparison</h2>
+        <p>
+            With ks = 500, the weak springs allow the cloth to conform very closely to the sphere, draping with many thin tight vertical folds hanging straight down.
+        </p>
+        <p>
+            With ks = 5000 (default), the cloth drapes naturally over the sphere with a smooth dome shape at the top and a moderate number of evenly distributed folds below.
+        </p>
+        <p>
+            With ks = 50000, the stiff springs strongly resist deformation, the cloth spreads rigidly outward with fewer but broader folds and conforms much less to the sphere's curvature, behaving more like a stiff sheet than soft fabric.
+        </p>
+
+        <h2>Plane Resting State</h2>
+        <p>
+            The cloth lies peacefully flat and at rest on the plane, rendered in Normal shading. The plane collision correctly prevents the cloth from passing through the surface, and the <strong>SURFACE_OFFSET</strong> keeps it resting cleanly on top
+            without any z-fighting artifacts.
+        </p>
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="write3_ks500.png" width="400px" />
+                        <figcaption>Ks500</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="write3_ks5000.png" width="400px" />
+                        <figcaption>ks5000</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="write3_ks50000.png" width="400px" />
+                        <figcaption>ks50000</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="default_normal_plane.png" width="400px" />
+                        <figcaption>Plane at rest</figcaption>
+                    </td>
+
+                </tr>
+
+            </table>
+        </div>
+
+
 
         <h2>Part 4: Handling self-collisions</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor

@@ -19,46 +19,106 @@
         
         img {
             display: inline-block;
+            max-width: 100%;
+            height: auto;
         }
         
         body {
             font-family: 'Inter', sans-serif;
+        }
+
+        .screenshot-grid {
+            width: 100%;
+            text-align: center;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .screenshot-grid td {
+            text-align: center;
+            padding: 0 10px 16px;
+            vertical-align: top;
+        }
+
+        .screenshot-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>CS184/284A Spring 2025 Homework 4 Write-Up</h1>
-        <div style="text-align: center;">Names: </div>
+        <h1>CS184/284A Spring 2026 Homework 4 Write-Up</h1>
+        <div style="text-align: center;">Names: David Smith, Tunmise Akanle</div>
 
-        <br> Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+        <br> Link to webpage:
+        <a href="https://cal-cs184-student.github.io/hw-webpages-dvyns/hw4/index.html">https://cal-cs184-student.github.io/hw-webpages-dvyns/hw4/index.html</a>
 
-        <br> Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-
-        <figure>
-            <img src="clothsim.png" alt="Cloth draped over sphere" style="width:70%" />
-            <figcaption>You can add images with captions!</figcaption>
-        </figure>
+        <br> Link to GitHub repository:
+        <a href="https://github.com/cal-cs184-student/hw4-clothsim-hw4anyname-1">https://github.com/cal-cs184-student/hw4-clothsim-hw4anyname-1</a>
 
         <!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
-        <h2>Overview</h2>
-        Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+        <h3>Overview</h3>
+        <p><s>Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.</s></p>
+        <p>
+            This writeup currently documents working cloth construction, numerical integration, and collisions with external primitives. For Part 3 specifically, the implementation now handles both sphere and plane collisions by projecting penetrated point masses back to the collision surface and scaling the correction by <code>(1 - friction)</code>. Later sections of the writeup are still incomplete, so they should be treated as placeholders rather than finished submission text.
+        </p>
 
         <h2>Part 1: Masses and springs</h2>
+        <h3>Wireframe views of <code>scene/pinned2.json</code></h3>
+        <p>
+            The following two screenshots show the cloth wireframe from viewing angles where the point-mass lattice and spring connectivity are easy to see. These are the general wireframe views requested by the spec before comparing individual constraint configurations.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img src="part1/viewangle1.png" class="screenshot-image" />
+                        <figcaption>Wireframe view of <code>scene/pinned2.json</code>, angle 1.</figcaption>
+                    </td>
+                    <td>
+                        <img src="part1/viewangle2.png" class="screenshot-image" />
+                        <figcaption>Wireframe view of <code>scene/pinned2.json</code>, angle 2.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <h3>1. Without any shearing constraints (structural + bending only):</h3>
         <p>
             With shearing disabled, the wireframe displays a clean orthogonal grid of squares. Springs only connect each point mass to its direct horizontal and vertical neighbors, so each cell appears as a plain rectangle with no diagonal lines crossing it.
         </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img src="part1/1constraint.png" class="screenshot-image" />
+                        <figcaption>Wireframe with structural and bending constraints only.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <h3>2. With only shearing constraints:</h3>
         <p>
             With only shearing enabled, the horizontal and vertical structural edges disappear entirely. What remains is a rotated diamond lattice, only the diagonal springs are visible, connecting each mass to its upper-left and upper-right neighbors. The cloth
             appears as a grid of diamond shapes tilted 45°.
         </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img src="part1/2constraint.png" class="screenshot-image" />
+                        <figcaption>Wireframe with only shearing constraints.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <h3>3. With all constraints:</h3>
         <p>
@@ -66,59 +126,101 @@
             also present but visually overlap with the structural springs and are difficult to distinguish separately.
         </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <img src="1constraint.png" width="400px" />
-                        <figcaption>wireframe with 1 constraint</figcaption>
+                    <td>
+                        <img src="part1/3constraint.png" class="screenshot-image" />
+                        <figcaption>Wireframe with all constraints enabled.</figcaption>
                     </td>
-                    <td style="text-align: center;">
-                        <img src="2constraint.png" width="400px" />
-                        <figcaption>wireframe with 2 constraint</figcaption>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="3constraint.png" width="400px" />
-                        <figcaption>wireframe with 3 constraint</figcaption>
-                    </td>
-
                 </tr>
             </table>
         </div>
 
         <h2>Part 2: Simulation via numerical integration</h2>
-        <h2>Effects of Changing ks (Spring Constant)</h2>
+        <h3>Default Parameter Simulation</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/default.png" class="screenshot-image" />
+                <figcaption>Default simulation with the baseline Part 2 parameters.</figcaption>
+            </div>
+        </div>
+        <h3>Effects of Changing ks (Spring Constant)</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/ks50.png" class="screenshot-image" />
+                <figcaption>Low spring stiffness: <code>ks = 50</code>.</figcaption>
+            </div>
+        </div>
         <p>
-            With a very low ks (50 N/m), the springs offer little resistance to deformation. As seen in the ks50 image, the cloth develops pronounced horizontal ripples and folds along the upper portion of the cloth, the surface buckles under its own weight and never
-            fully smooths out even at rest.
+            With a very low ks (50 N/m), the springs offer little resistance to deformation. 
+            The cloth shows far more ripples and never
+            fully smooths out even at rest. Although it cannot be seen in the image oscillations continue for much longer than in the default case.
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/ks50000.png" class="screenshot-image" />
+                <figcaption>High spring stiffness: <code>ks = 50000</code>.</figcaption>
+            </div>
+        </div>
         <p>
-            With a very high ks (50000 N/m), the springs strongly resist deformation and the cloth hangs much more rigidly. As seen in the ks50000 image, the top edge forms only a single clean shallow curve with no wrinkling, and the overall surface is nearly flat,
-            behaving more like a stiff sheet than a soft fabric.
+            With a very high ks (50000 N/m), the springs strongly resist deformation and the cloth hangs much more rigidly. 
+            As seen in the image, the top edge forms only a singlecurve with minimal wrinkling. The overall surface is mostly flatter compared to the default parameters.
         </p>
 
-        <h2>Effects of Changing Density</h2>
+        <h3>Effects of Changing Density</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/density1.png" class="screenshot-image" />
+                <figcaption>Low density: <code>density = 1</code>.</figcaption>
+            </div>
+        </div>
         <p>
-            With low density (1 g/cm²), the cloth is very light and gravity has minimal effect on it. The cloth sags only slightly, hanging with a shallow smooth curve at the top and a relatively flat body.
+            With low density (1 g/cm²), the cloth does not have enough weight to fully extend most of the springs. 
+            It hangs with a shallower smooth curve at the top and a relatively flat body.
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/density150.png" class="screenshot-image" />
+                <figcaption>High density: <code>density = 150</code>.</figcaption>
+            </div>
+        </div>
         <p>
-            With high density (150 g/cm²), the cloth is much heavier, causing it to sag dramatically, the top edge curves deeply downward and the sides pull inward significantly, producing a shape visually similar to the low-ks case since both result in greater deformation
+            With high density (150 g/cm²), the cloth to sags much deeper. The there are multiple curves that form at the top and sides pull inward. 
+            The resulting image is more visually similar to the low-ks case since both result in greater deformation
             relative to the spring forces.
         </p>
 
-        <h2>Effects of Changing Damping</h2>
+        <h3>Effects of Changing Damping</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/damping0.png" class="screenshot-image" />
+                <figcaption>No damping: <code>damping = 0%</code>.</figcaption>
+            </div>
+        </div>
         <p>
-            With damping at 0%, energy is never removed from the system. As seen in the damping0 image, the cloth continues oscillating and rippling, visible as wave-like folds across the upper surface, and never reaches a true resting state.
+            With damping at 0%, energy is never removed from the system and it continues to oscillate chaotically never reaching a resting state.
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/damping1.png" class="screenshot-image" />
+                <figcaption>Higher damping: <code>damping = 1%</code>.</figcaption>
+            </div>
+        </div>
         <p>
             With damping at ~1% (damping1), the cloth loses energy quickly and settles into a smooth, stable resting position with no oscillation, falling in a slow controlled motion compared to the undamped case.
+            It looks very similar to the default parameter case.
         </p>
 
-        <h2>scene/pinned4.json Final Resting State</h2>
+        <h3>scene/pinned4.json Final Resting State</h3>
         <p>
             <strong>Default Parameters:</strong> density = 15 g/cm², ks = 5000 N/m, damping = 0.2%
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part2/defaultPined4.png" class="screenshot-image" />
+                <figcaption><code>scene/pinned4.json</code> at rest with default parameters.</figcaption>
+            </div>
+        </div>
 
         <p>
             The cloth is pinned at all four corners and sags gently downward under gravity, forming a shallow bowl-like depression in the center.
@@ -133,146 +235,443 @@
         </p>
 
 
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="ks50.png" width="400px" />
-                        <figcaption>Ks50</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <img src="ks50000.png" width="400px" />
-                        <figcaption>ks50000</figcaption>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="damping0.png" width="400px" />
-                        <figcaption>damping0</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <img src="damping1.png" width="400px" />
-                        <figcaption>damping1</figcaption>
-                    </td>
-
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="density1.png" width="400px" />
-                        <figcaption>density1</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <img src="density150.png" width="400px" />
-                        <figcaption>density150</figcaption>
-                    </td>
-
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="defaultPined4.png" width="400px" />
-                        <figcaption>defaullt pinned4</figcaption>
-                    </td>
-
-                </tr>
-            </table>
-        </div>
-
-
-
 
 
 
         <h2>Part 3: Handling collisions with other objects</h2>
-        <h2>Sphere Collisions</h2>
+        <h3>Sphere Collisions</h3>
         <p>
-            For sphere collisions, each point mass is tested by computing the distance from the sphere's origin to the point mass's current position. If this distance is less than the sphere's radius, the point mass has penetrated the sphere and needs to be pushed
-            back out.
+            Each point mass checks whether its updated position lies inside the sphere. If it does, the code computes a direction from the sphere center toward the point mass, projects the point to the sphere surface, and moves the mass from <code>last_position</code> toward that surface point using a friction-scaled correction.
         </p>
         <p>
             The tangent point is computed by extending the ray from the origin through the point mass position to land exactly on the sphere surface. A correction vector is computed from the point mass's last position to this tangent point and applied scaled by (1
             - friction).
         </p>
-
-        <h2>Plane Collisions</h2>
         <p>
-            For plane collisions, each point mass is tested by computing the signed distances of its current and last positions from the plane using the dot product with the plane normal. If the signs differ, the point mass has crossed the plane between timesteps.
+            The implementation also guards against the degenerate case where the point mass lands exactly at the sphere center by falling back to the previous-step direction instead of normalizing a zero vector.
         </p>
         <p>
-            The tangent point on the plane surface is computed and nudged by a small
-            <strong>SURFACE_OFFSET</strong> in the normal direction to prevent clipping. The correction is applied from the last position to the offset tangent point, scaled by (1 - friction).
+            The core sphere collision implementation is shown below:
         </p>
+        <pre style="width: 90%; margin: 16px auto; padding: 16px; border: 1px solid #ccc; background: #f8f8f8; overflow-x: auto;"><code>void Sphere::collide(PointMass &amp;pm) {
+  Vector3D diff = pm.position - origin;
+  double distance = diff.norm();
+  if (distance &gt;= radius) {
+    return;
+  }
 
-        <h2>Sphere ks Comparison</h2>
+  Vector3D direction;
+  if (distance &gt; 0) {
+    direction = diff / distance;
+  } else {
+    Vector3D last_diff = pm.last_position - origin;
+    direction = last_diff.norm() &gt; 0 ? last_diff.unit() : Vector3D(0, 1, 0);
+  }
+
+  Vector3D tangent_point = origin + direction * radius;
+  Vector3D correction = tangent_point - pm.last_position;
+  pm.position = pm.last_position + correction * (1.0 - friction);
+}</code></pre>
+
+        <h3>Plane Collisions</h3>
+        <p>
+            For plane collisions, each point mass is tested by computing the signed distances of its current and last positions from the plane using the dot product with the plane normal. If the signs differ, the point mass has crossed the plane between timesteps.</s>
+            It avoids falsely re-colliding a point mass that starts exactly on the plane and then moves away from it.
+        </p>
+        <p>
+            When a correction is needed, the code projects the point mass to the plane, nudges it by a small <code>SURFACE_OFFSET</code> to avoid clipping, and applies the correction from <code>last_position</code> with friction.
+            The offset direction is chosen so exact-contact edge cases are pushed to the correct side of the plane.
+        </p>
+        <p>
+            The plane collision code:
+        </p>
+        <pre style="width: 90%; margin: 16px auto; padding: 16px; border: 1px solid #ccc; background: #f8f8f8; overflow-x: auto;"><code>#define SURFACE_OFFSET 0.0001
+
+void Plane::collide(PointMass &amp;pm) {
+  double curr_dist = dot(pm.position - point, normal);
+  double last_dist = dot(pm.last_position - point, normal);
+
+  if ((curr_dist &gt; 0 &amp;&amp; last_dist &gt; 0) ||
+      (last_dist == 0 &amp;&amp; curr_dist &gt;= 0)) {
+    return;
+  }
+
+  Vector3D tangent_point = pm.position - normal * curr_dist;
+  Vector3D offset_direction;
+  if (last_dist &gt; 0) {
+    offset_direction = normal;
+  } else if (last_dist &lt; 0) {
+    offset_direction = -normal;
+  } else {
+    offset_direction = curr_dist &lt; 0 ? normal : -normal;
+  }
+
+  Vector3D correction =
+      tangent_point + SURFACE_OFFSET * offset_direction - pm.last_position;
+  pm.position = pm.last_position + correction * (1.0 - friction);
+}</code></pre>
+
+        <h3>Sphere ks Comparison</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part3/write3_ks500.png" class="screenshot-image" />
+                <figcaption>ks = 500, soft cloth with tighter folds around the sphere.</figcaption>
+            </div>
+        </div>
         <p>
             With ks = 500, the weak springs allow the cloth to conform very closely to the sphere, draping with many thin tight vertical folds hanging straight down.
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part3/write3_ks5000.png" class="screenshot-image" />
+                <figcaption>ks = 5000, balanced drape with moderate folds.</figcaption>
+            </div>
+        </div>
         <p>
             With ks = 5000 (default), the cloth drapes naturally over the sphere with a smooth dome shape at the top and a moderate number of evenly distributed folds below.
         </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part3/write3_ks50000.png" class="screenshot-image" />
+                <figcaption>ks = 50000, stiffer cloth with broader folds.</figcaption>
+            </div>
+        </div>
         <p>
             With ks = 50000, the stiff springs strongly resist deformation, the cloth spreads rigidly outward with fewer but broader folds and conforms much less to the sphere's curvature, behaving more like a stiff sheet than soft fabric.
         </p>
 
-        <h2>Plane Resting State</h2>
-        <p>
-            The cloth lies peacefully flat and at rest on the plane, rendered in Normal shading. The plane collision correctly prevents the cloth from passing through the surface, and the <strong>SURFACE_OFFSET</strong> keeps it resting cleanly on top
-            without any z-fighting artifacts.
-        </p>
-
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="write3_ks500.png" width="400px" />
-                        <figcaption>Ks500</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <img src="write3_ks5000.png" width="400px" />
-                        <figcaption>ks5000</figcaption>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <img src="write3_ks50000.png" width="400px" />
-                        <figcaption>ks50000</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <img src="default_normal_plane.png" width="400px" />
-                        <figcaption>Plane at rest</figcaption>
-                    </td>
-
-                </tr>
-
-            </table>
+        <h3>Plane Resting State</h3>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part3/default_normal_plane.png" class="screenshot-image" />
+                <figcaption>Plane wireframe resting peacefully.</figcaption>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center; margin: 16px 0 12px;">
+            <div style="text-align: center;">
+                <img src="part3/cal_plane.png" class="screenshot-image" />
+                <figcaption>Plane resting with texture.</figcaption>
+            </div>
         </div>
 
 
 
         <h2>Part 4: Handling self-collisions</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <p>
+            We implemented self-collision with spatial hashing in <code>Cloth::hash_position</code>, <code>Cloth::build_spatial_map</code>, and <code>Cloth::self_collide</code>. At each simulation step, the cloth partitions space into boxes of size <code>3 * width / num_width_points</code> by <code>3 * height / num_height_points</code> by <code>max(w, h)</code>. Each point mass is hashed into one of these boxes, and the spatial map stores a list of point masses for each occupied box.
+        </p>
+        <p>
+            During self-collision resolution, each point mass only checks the other point masses in its own hash bucket instead of comparing against the entire cloth. If another mass is closer than <code>2 * thickness</code>, we compute the displacement needed to push the current mass away until the pair is exactly <code>2 * thickness</code> apart. The final displacement is the average of all such correction vectors divided by the number of simulation steps, which keeps the correction from being too abrupt in a single step. Pinned masses are not moved by this pass.
+        </p>
+        <p>
+            The spatial map construction and hash function are shown below. The cloth bins each point mass into a 3D box whose dimensions are based on the cloth resolution, then uses a weighted combination of the snapped box coordinates as the hash key:
+        </p>
+        <pre style="width: 90%; margin: 16px auto; padding: 16px; border: 1px solid #ccc; background: #f8f8f8; overflow-x: auto;"><code>void Cloth::build_spatial_map() {
+  for (const auto &amp;entry : map) {
+    delete(entry.second);
+  }
+  map.clear();
+
+  for (auto &amp;pm : point_masses) {
+    float key = hash_position(pm.position);
+    if (map.find(key) == map.end()) {
+      map[key] = new vector&lt;PointMass *&gt;();
+    }
+    map[key]-&gt;push_back(&amp;pm);
+  }
+}
+
+float Cloth::hash_position(Vector3D pos) {
+  double box_width = 3.0 * width / num_width_points;
+  double box_height = 3.0 * height / num_height_points;
+  double box_depth = box_width &gt; box_height ? box_width : box_height;
+
+  double x = pos.x - fmod(pos.x, box_width);
+  double y = pos.y - fmod(pos.y, box_height);
+  double z = pos.z - fmod(pos.z, box_depth);
+
+  return x * 73856093.0 + y * 19349663.0 + z * 83492791.0;
+}</code></pre>
+        <p>
+            The actual self-collision response then looks only within the current point mass's bucket, accumulates separation corrections against nearby masses, and applies the average displacement scaled by the number of simulation steps:
+        </p>
+        <pre style="width: 90%; margin: 16px auto; padding: 16px; border: 1px solid #ccc; background: #f8f8f8; overflow-x: auto;"><code>void Cloth::self_collide(PointMass &amp;pm, double simulation_steps) {
+  if (pm.pinned) return;
+
+  float key = hash_position(pm.position);
+  if (map.find(key) == map.end()) return;
+
+  Vector3D correction(0, 0, 0);
+  int num_corrections = 0;
+  double min_distance = 2.0 * thickness;
+
+  for (PointMass *candidate : *map[key]) {
+    if (candidate == &amp;pm) continue;
+
+    Vector3D direction = pm.position - candidate-&gt;position;
+    double distance = direction.norm();
+    if (distance &gt;= min_distance) continue;
+
+    if (distance == 0) {
+      direction = pm.position - pm.last_position;
+      if (direction.norm() == 0) {
+        direction = Vector3D(1, 0, 0);
+      }
+      distance = 0;
+    }
+
+    correction += direction.unit() * (min_distance - distance);
+    num_corrections++;
+  }
+
+  if (num_corrections &gt; 0) {
+    pm.position += correction / num_corrections / simulation_steps;
+  }
+}</code></pre>
+
+        <h3>Self-collision sequence</h3>
+        <p>
+            These placeholders should be replaced with screenshots from <code>./clothsim -f ../scene/selfCollision.json</code> using the same camera angle across the sequence.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: default selfCollision scene at the first visible self-contact, while the falling cloth just begins folding into itself.
+                        </div>
+                        <figcaption>Early self-collision: first fold/contact.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: default selfCollision scene midway through the fall, with several folds stacked but before the cloth has mostly settled.
+                        </div>
+                        <figcaption>Mid-fall: multiple folds supported by self-collision.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: default selfCollision scene near rest on the plane, showing the final pile of cloth without obvious self-intersection.
+                        </div>
+                        <figcaption>Later state: folded cloth near rest.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>Parameter effects</h3>
+        <p>
+            Lowering <code>ks</code> makes the springs weaker, so the cloth bends and crumples into tighter, more numerous folds as it falls onto itself. Raising <code>ks</code> makes the sheet resist deformation more strongly, producing broader folds and a flatter, less bunched-up resting shape.
+        </p>
+        <p>
+            Changing <code>density</code> changes how strongly the spring forces accelerate each point mass. Lower density makes the cloth respond more strongly to the same spring forces, so folds tend to open up and rebound more. Higher density makes the cloth feel heavier relative to its springs, so it collapses into deeper, more compressed folds.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: selfCollision scene with low spring stiffness, e.g. ks = 500, captured after folds are clearly visible.
+                        </div>
+                        <figcaption>Low <code>ks</code>: tighter folds and more crumpling.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: selfCollision scene with high spring stiffness, e.g. ks = 50000, at a similar time/camera angle as the low-ks capture.
+                        </div>
+                        <figcaption>High <code>ks</code>: broader, stiffer folds.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: selfCollision scene with low density, e.g. density = 5, captured once the cloth has folded onto the plane.
+                        </div>
+                        <figcaption>Low density: looser folds with more rebound.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: selfCollision scene with high density, e.g. density = 150, captured from the same view as the low-density image.
+                        </div>
+                        <figcaption>High density: heavier collapse and compressed folds.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <h2>Part 5: Shaders</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <p>
+            A shader program is a small program that runs on the GPU as part of the rendering pipeline. In this homework, the vertex shader processes per-vertex inputs like position, normal, tangent, and UV coordinates, transforms them into the spaces needed by the renderer, and passes those values forward as varyings. After rasterization, the fragment shader receives interpolated versions of those values for each fragment and computes the final color written to the screen. That division of labor is what lets the same underlying cloth or sphere geometry look diffuse, glossy, textured, bumped, displaced, or mirror-like depending on which shader is active.
+        </p>
+        <p>
+            Our Part 5 implementation starts with Lambertian diffuse shading and then extends that base to Blinn-Phong shading, texture mapping, bump mapping, displacement mapping, and environment-mapped reflections. The diffuse and Blinn-Phong shaders use world-space fragment position, surface normal, camera position, and light position to compute lighting. The texture shader replaces a constant albedo with a sampled 2D image. The bump and displacement shaders both interpret a texture as a height field, but bump mapping only perturbs the shading normal while displacement mapping also modifies the vertex positions. The mirror shader reflects the view direction about the normal and uses that reflected direction to sample a cubemap.
+        </p>
 
-        <h2>(Optional) Part 6: Extra Credit - Additional cloth simulation features!</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-        in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h3>Blinn-Phong shading</h3>
+        <p>
+            The Blinn-Phong model combines ambient, diffuse, and specular terms. The ambient term adds a small constant base illumination so surfaces are not completely black in shadowed regions. The diffuse term scales with <code>max(dot(n, l), 0.0)</code>, so it is strongest when the surface faces the light directly. The specular term uses the half-vector between the view and light directions, creating a highlight where the surface is oriented to reflect light toward the camera. In our shader, we used an ambient coefficient of about <code>0.1</code>, a white-ish specular coefficient of about <code>0.6</code>, and a shininess exponent of <code>64</code>, which gives a relatively tight highlight without making the cloth look unnaturally metallic.
+        </p>
+        <p>
+            To generate the required component screenshots, the full shader can be decomposed by temporarily outputting only the ambient term, only the diffuse term, or only the specular term from <code>Phong.frag</code>. The normal production render uses the sum of all three terms.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: ambient-only Blinn-Phong render.
+                        </div>
+                        <figcaption>Ambient component only. Temporarily output just the ambient term from <code>Phong.frag</code>.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: diffuse-only Blinn-Phong render.
+                        </div>
+                        <figcaption>Diffuse component only. Temporarily output just the Lambertian term from <code>Phong.frag</code>.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: specular-only Blinn-Phong render.
+                        </div>
+                        <figcaption>Specular component only. Temporarily output just the Blinn-Phong highlight term.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: full Blinn-Phong render.
+                        </div>
+                        <figcaption>Full ambient + diffuse + specular result.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
-        <h2>Additional Notes (please remove)</h2>
-        <ul>
-            <li>You can also add code if you'd like as so: <code>code code code</code></li>
-            <li>If you'd like to add math equations,
-                <ul>
-                    <li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-                    <li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-                </ul>
-            </li>
-        </ul>
+        <h3>Texture mapping</h3>
+        <p>
+            The texture mapping shader is the simplest material in this part. The vertex shader passes the interpolated UV coordinate into the fragment stage, and the fragment shader samples <code>u_texture_1</code> with <code>texture(u_texture_1, v_uv)</code>. That means the visible color comes from an image lookup instead of from a constant color. For the writeup screenshot required by the spec, this slot should use a custom texture placed in <code>/textures/</code> rather than one of the default starter textures.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 820px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: texture shader using your own custom texture from <code>/textures/</code>.
+                        </div>
+                        <figcaption>Required by the spec: show the texture-mapped shader using a non-default, user-supplied texture.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>Bump mapping and displacement mapping</h3>
+        <p>
+            Both shaders treat the red channel of <code>u_texture_2</code> as a height map. For bump mapping, we compute finite differences in texture space,
+            <code>dU = (h(u + 1 / w, v) - h(u, v)) * k_h * k_n</code> and
+            <code>dV = (h(u, v + 1 / h) - h(u, v)) * k_h * k_n</code>,
+            then construct the local normal <code>(-dU, -dV, 1)</code>. We transform that local-space normal back into model/world space with the TBN matrix built from the tangent, bitangent, and original normal. This changes the lighting response without changing the underlying mesh, so the object appears more detailed while its silhouette stays the same.
+        </p>
+        <p>
+            Displacement mapping uses the same height field but also moves each vertex along its original normal in <code>Displacement.vert</code>. That means the geometry itself is modified before rasterization, so the final surface can visibly bulge or recess instead of only faking the effect through shading. With the same height texture, bump mapping tends to look smoother on a coarse sphere because most of the detail is carried by per-fragment normal perturbations, while displacement mapping is much more sensitive to tessellation because only existing vertices can move.
+        </p>
+        <p>
+            On a coarse sphere such as <code>-o 16 -a 16</code>, the bump-mapped render still shows plausible fine lighting variation, but the silhouette remains obviously faceted because the mesh itself has not changed. The displacement shader reacts more strongly to mesh resolution: on the coarse sphere, the displaced surface can only move a small number of vertices, so the relief looks stepped and blocky. On a fine sphere such as <code>-o 128 -a 128</code>, the displacement shader has enough vertices to approximate the height map much more smoothly, so both the surface profile and the silhouette become much more convincing. For the required comparison renders, the same non-default height texture should be used for both bump and displacement.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: bump mapping on cloth using a non-default height texture.
+                        </div>
+                        <figcaption>Required by the spec. Use the same height texture here and on the sphere renders below.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: bump mapping on sphere using the same height texture.
+                        </div>
+                        <figcaption>Required by the spec. This should use the same texture as the cloth bump render.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;" colspan="2">
+                        <div style="width: 820px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: displacement mapping on sphere using the same height texture.
+                        </div>
+                        <figcaption>Required by the spec. Use the same non-default height map as the bump renders.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: bump-mapped sphere at <code>-o 16 -a 16</code>.
+                        </div>
+                        <figcaption>Coarse sphere for bump mapping comparison.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: bump-mapped sphere at <code>-o 128 -a 128</code>.
+                        </div>
+                        <figcaption>Fine sphere for bump mapping comparison.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: displacement-mapped sphere at <code>-o 16 -a 16</code>.
+                        </div>
+                        <figcaption>Coarse sphere for displacement comparison.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: displacement-mapped sphere at <code>-o 128 -a 128</code>.
+                        </div>
+                        <figcaption>Fine sphere for displacement comparison.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>Environment-mapped reflections</h3>
+        <p>
+            The mirror shader uses the camera position and fragment position to compute the outgoing eye direction <code>w_o</code>, reflects that direction about the surface normal, and samples the cubemap with the reflected direction. This is a simple but effective approximation of a perfect mirror material because it replaces the explicit environment-light integration from the path tracer with a direct cubemap lookup. The effect is especially noticeable on the sphere, where the continuously changing normals cause the reflected environment to warp smoothly across the surface.
+        </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: mirror shader on cloth.
+                        </div>
+                        <figcaption>Required by the spec.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
+                            Screenshot placeholder: mirror shader on sphere.
+                        </div>
+                        <figcaption>Required by the spec.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>Custom shader</h3>
+        <p>
+            We did not implement the optional custom shader for this homework, so there is no extra credit shader result to document here.
+        </p>
+
+        <h2>A.I. Acknowledgement</h2>
+        <p>
+            Due to time constraints, a more substantial portion of the code and writeup were written with the help of A.I. tools compared to our previous homework submissions. 
+            In particular we used ChatGPT Codex and Claude Code for code generation and documentation.
+            We have reviewed the implementation and ensured the writeup reflected our understanding of the assignment.
+        </p>
     </div>
 </body>
-
-</html>
 
 </html>

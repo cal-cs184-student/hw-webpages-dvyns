@@ -431,74 +431,123 @@ float Cloth::hash_position(Vector3D pos) {
 
         <h3>Self-collision sequence</h3>
         <p>
-            These placeholders should be replaced with screenshots from <code>./clothsim -f ../scene/selfCollision.json</code> using the same camera angle across the sequence.
+            The following sequence shows the cloth progressively folding into itself in <code>scene/selfCollision.json</code> before settling.
         </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: default selfCollision scene at the first visible self-contact, while the falling cloth just begins folding into itself.
-                        </div>
-                        <figcaption>Early self-collision: first fold/contact.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc1.png" alt="Self-collision sequence frame 1">
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: default selfCollision scene midway through the fall, with several folds stacked but before the cloth has mostly settled.
-                        </div>
-                        <figcaption>Mid-fall: multiple folds supported by self-collision.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc2.png" alt="Self-collision sequence frame 2">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc3.png" alt="Self-collision sequence frame 3">
                     </td>
                 </tr>
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: default selfCollision scene near rest on the plane, showing the final pile of cloth without obvious self-intersection.
-                        </div>
-                        <figcaption>Later state: folded cloth near rest.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc4.png" alt="Self-collision sequence frame 4">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc5.png" alt="Self-collision sequence frame 5">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/selfc6.png" alt="Self-collision sequence frame 6">
                     </td>
                 </tr>
             </table>
+            <p>...and then at a more restful state...</p>
+            <img class="screenshot-image" src="part4/selfcfinal.png" alt="Self-collision final restful state">
         </div>
 
         <h3>Parameter effects</h3>
-        <p>
-            Lowering <code>ks</code> makes the springs weaker, so the cloth bends and crumples into tighter, more numerous folds as it falls onto itself. Raising <code>ks</code> makes the sheet resist deformation more strongly, producing broader folds and a flatter, less bunched-up resting shape.
-        </p>
-        <p>
-            Changing <code>density</code> changes how strongly the spring forces accelerate each point mass. Lower density makes the cloth respond more strongly to the same spring forces, so folds tend to open up and rebound more. Higher density makes the cloth feel heavier relative to its springs, so it collapses into deeper, more compressed folds.
-        </p>
+        <h4>Lower Spring Constant (<code>ks=50</code>)</h4>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: selfCollision scene with low spring stiffness, e.g. ks = 500, captured after folds are clearly visible.
-                        </div>
-                        <figcaption>Low <code>ks</code>: tighter folds and more crumpling.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50_1.png" alt="Self-collision with ks equals 50 frame 1">
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: selfCollision scene with high spring stiffness, e.g. ks = 50000, at a similar time/camera angle as the low-ks capture.
-                        </div>
-                        <figcaption>High <code>ks</code>: broader, stiffer folds.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50_2.png" alt="Self-collision with ks equals 50 frame 2">
                     </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: selfCollision scene with low density, e.g. density = 5, captured once the cloth has folded onto the plane.
-                        </div>
-                        <figcaption>Low density: looser folds with more rebound.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50_3.png" alt="Self-collision with ks equals 50 frame 3">
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: selfCollision scene with high density, e.g. density = 150, captured from the same view as the low-density image.
-                        </div>
-                        <figcaption>High density: heavier collapse and compressed folds.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50_4.png" alt="Self-collision with ks equals 50 frame 4">
                     </td>
                 </tr>
             </table>
         </div>
+        <h4>Higher Spring Constant (<code>ks=50000</code>)</h4>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50000-1.png" alt="Self-collision with ks equals 50000 frame 1">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50000-2.png" alt="Self-collision with ks equals 50000 frame 2">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50000-3.png" alt="Self-collision with ks equals 50000 frame 3">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/ks50000-4.png" alt="Self-collision with ks equals 50000 frame 4">
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            Lowering <code>ks</code> makes the springs weaker, so the cloth bends and crumples into tighter, more numerous folds as it falls onto itself. Raising <code>ks</code> makes the sheet resist deformation more strongly, producing broader folds and a flatter, less bunched-up resting shape.
+        </p>
+        <h4>Lower Density (1 g/cm^2)</h4>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img class="screenshot-image" src="part4/density1.png" alt="Self-collision with lower density frame 1">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/density2.png" alt="Self-collision with lower density frame 2">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/density3.png" alt="Self-collision with lower density frame 3">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/density4.png" alt="Self-collision with lower density frame 4">
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <h4>Higher Density (150 g/cm^2)</h4>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img class="screenshot-image" src="part4/denser1.png" alt="Self-collision with higher density frame 1">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/denser2.png" alt="Self-collision with higher density frame 2">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/denser3.png" alt="Self-collision with higher density frame 3">
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part4/denser4.png" alt="Self-collision with higher density frame 4">
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            Changing <code>density</code> changes how strongly the spring forces accelerate each point mass. 
+            Lower density makes the cloth respond more strongly to the same spring forces, so folds tend to open up and rebound more. 
+            Higher density makes the cloth heavier relative to its springs, so it collapses into deeper, more compressed folds.
+            In practice, lowering the density produces a similar appearance to increasing the spring constant and vice versa, which is what we would expect.
+        </p>
 
         <h2>Part 5: Shaders</h2>
         <p>

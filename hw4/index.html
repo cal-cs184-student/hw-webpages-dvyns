@@ -64,9 +64,13 @@
 		-->
 
         <h3>Overview</h3>
-        <p><s>Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.</s></p>
         <p>
-            This writeup currently documents working cloth construction, numerical integration, and collisions with external primitives. For Part 3 specifically, the implementation now handles both sphere and plane collisions by projecting penetrated point masses back to the collision surface and scaling the correction by <code>(1 - friction)</code>. Later sections of the writeup are still incomplete, so they should be treated as placeholders rather than finished submission text.
+            In this homework, we built a cloth simulation and rendering pipeline. 
+            We represented the cloth as a mass-spring system. 
+            Verlet integration was used to update the positions of the masses based on structural, shearing, and bending forces. 
+            We then handled collisions with planes, spheres, and itself through spatial hashing to check that masses are in valid positions.
+            When they are not, we apply a correction vector to push it back to a valid spot.
+            We the implemented a set of shaders: diffuse lighting, Blinn-Phong shading, texture mapping, bump mapping, displacement mapping, and environment-mapped reflections. 
         </p>
 
         <h2>Part 1: Masses and springs</h2>
@@ -551,46 +555,43 @@ float Cloth::hash_position(Vector3D pos) {
 
         <h2>Part 5: Shaders</h2>
         <p>
-            A shader program is a small program that runs on the GPU as part of the rendering pipeline. In this homework, the vertex shader processes per-vertex inputs like position, normal, tangent, and UV coordinates, transforms them into the spaces needed by the renderer, and passes those values forward as varyings. After rasterization, the fragment shader receives interpolated versions of those values for each fragment and computes the final color written to the screen. That division of labor is what lets the same underlying cloth or sphere geometry look diffuse, glossy, textured, bumped, displaced, or mirror-like depending on which shader is active.
-        </p>
-        <p>
-            Our Part 5 implementation starts with Lambertian diffuse shading and then extends that base to Blinn-Phong shading, texture mapping, bump mapping, displacement mapping, and environment-mapped reflections. The diffuse and Blinn-Phong shaders use world-space fragment position, surface normal, camera position, and light position to compute lighting. The texture shader replaces a constant albedo with a sampled 2D image. The bump and displacement shaders both interpret a texture as a height field, but bump mapping only perturbs the shading normal while displacement mapping also modifies the vertex positions. The mirror shader reflects the view direction about the normal and uses that reflected direction to sample a cubemap.
+            Shaders are a collection of programs that run parts of the graphics pipeline in pararallel on a GPU. 
+            This is done to decrease the required runtime to render scenes, especially real-time scenes. 
+            Vertex shaders transform attributes of the vertices of an object based on some underlying map.
+            Following rasterization, fragment shaders use the vertex shader values to interpolated corresponding values for each pixel in a fragment. 
         </p>
 
         <h3>Blinn-Phong shading</h3>
         <p>
-            The Blinn-Phong model combines ambient, diffuse, and specular terms. The ambient term adds a small constant base illumination so surfaces are not completely black in shadowed regions. The diffuse term scales with <code>max(dot(n, l), 0.0)</code>, so it is strongest when the surface faces the light directly. The specular term uses the half-vector between the view and light directions, creating a highlight where the surface is oriented to reflect light toward the camera. In our shader, we used an ambient coefficient of about <code>0.1</code>, a white-ish specular coefficient of about <code>0.6</code>, and a shininess exponent of <code>64</code>, which gives a relatively tight highlight without making the cloth look unnaturally metallic.
+            Blinn-Phong shading is a lighting model that tries to approximate the light scattering behavior of various surfaces.
+            It does this by calculating three different terms: the ambient term, the diffuse term, and the specular term.
+            The ambient term is based on some small constant light emanating from a surface.
+            The diffuse term is what it sounds like, essentially represents the diffuse reflection from a diffuse surface.
+            The specular term adds highlights of mirror like reflections. 
+            The relative ratio/strength of these three terms helps to immitate real reflective behavior.
         </p>
         <p>
-            To generate the required component screenshots, the full shader can be decomposed by temporarily outputting only the ambient term, only the diffuse term, or only the specular term from <code>Phong.frag</code>. The normal production render uses the sum of all three terms.
+            The four renders below show the same Blinn-Phong shader with different output terms enabled: <code>blinnphong1.png</code> is ambient only, <code>blinnphong2.png</code> is diffuse only, <code>blinnphong3.png</code> is specular only, and <code>blinnphong4.png</code> is the full ambient + diffuse + specular result. These were generated by temporarily outputting the corresponding term from <code>Phong.frag</code> and then restoring the full sum for the final render.
         </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: ambient-only Blinn-Phong render.
-                        </div>
-                        <figcaption>Ambient component only. Temporarily output just the ambient term from <code>Phong.frag</code>.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/blinnphong1.png" alt="Blinn-Phong ambient-only render">
+                        <figcaption>Ambient component only.</figcaption>
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: diffuse-only Blinn-Phong render.
-                        </div>
-                        <figcaption>Diffuse component only. Temporarily output just the Lambertian term from <code>Phong.frag</code>.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/blinnphong2.png" alt="Blinn-Phong diffuse-only render">
+                        <figcaption>Diffuse component only.</figcaption>
                     </td>
                 </tr>
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: specular-only Blinn-Phong render.
-                        </div>
-                        <figcaption>Specular component only. Temporarily output just the Blinn-Phong highlight term.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/blinnphong3.png" alt="Blinn-Phong specular-only render">
+                        <figcaption>Specular component only.</figcaption>
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: full Blinn-Phong render.
-                        </div>
+                    <td>
+                        <img class="screenshot-image" src="part5/blinnphong4.png" alt="Full Blinn-Phong render">
                         <figcaption>Full ambient + diffuse + specular result.</figcaption>
                     </td>
                 </tr>
@@ -599,120 +600,115 @@ float Cloth::hash_position(Vector3D pos) {
 
         <h3>Texture mapping</h3>
         <p>
-            The texture mapping shader is the simplest material in this part. The vertex shader passes the interpolated UV coordinate into the fragment stage, and the fragment shader samples <code>u_texture_1</code> with <code>texture(u_texture_1, v_uv)</code>. That means the visible color comes from an image lookup instead of from a constant color. For the writeup screenshot required by the spec, this slot should use a custom texture placed in <code>/textures/</code> rather than one of the default starter textures.
+            The vertex shader passes the interpolated UV coordinate into the fragment stage, and <code>Texture.frag</code> samples <code>u_texture_1</code> with <code>texture(u_texture_1, v_uv)</code>, so the visible color comes from an image lookup instead of from a constant color. To make texture selection easier, we updated <code>clothSimulator.h</code> and <code>clothSimulator.cpp</code> to scan the <code>/textures</code> directory at startup, populate a texture dropdown in the GUI, and reload the selected image into the texture unit used by <code>Texture.frag</code>. That means we can add another supported image file to <code>/textures</code> and choose it from the GUI without editing the shader or hardcoding another texture path.
         </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 820px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: texture shader using your own custom texture from <code>/textures/</code>.
-                        </div>
-                        <figcaption>Required by the spec: show the texture-mapped shader using a non-default, user-supplied texture.</figcaption>
-                    </td>
-                </tr>
-            </table>
+            <img class="screenshot-image" src="part5/texture_scarlette.png" alt="Texture mapping render using the Scarlette texture">
+            <figcaption>Texture-mapped render using a non-default user-supplied texture.</figcaption>
         </div>
 
         <h3>Bump mapping and displacement mapping</h3>
-        <p>
-            Both shaders treat the red channel of <code>u_texture_2</code> as a height map. For bump mapping, we compute finite differences in texture space,
-            <code>dU = (h(u + 1 / w, v) - h(u, v)) * k_h * k_n</code> and
-            <code>dV = (h(u, v + 1 / h) - h(u, v)) * k_h * k_n</code>,
-            then construct the local normal <code>(-dU, -dV, 1)</code>. We transform that local-space normal back into model/world space with the TBN matrix built from the tangent, bitangent, and original normal. This changes the lighting response without changing the underlying mesh, so the object appears more detailed while its silhouette stays the same.
-        </p>
-        <p>
-            Displacement mapping uses the same height field but also moves each vertex along its original normal in <code>Displacement.vert</code>. That means the geometry itself is modified before rasterization, so the final surface can visibly bulge or recess instead of only faking the effect through shading. With the same height texture, bump mapping tends to look smoother on a coarse sphere because most of the detail is carried by per-fragment normal perturbations, while displacement mapping is much more sensitive to tessellation because only existing vertices can move.
-        </p>
-        <p>
-            On a coarse sphere such as <code>-o 16 -a 16</code>, the bump-mapped render still shows plausible fine lighting variation, but the silhouette remains obviously faceted because the mesh itself has not changed. The displacement shader reacts more strongly to mesh resolution: on the coarse sphere, the displaced surface can only move a small number of vertices, so the relief looks stepped and blocky. On a fine sphere such as <code>-o 128 -a 128</code>, the displacement shader has enough vertices to approximate the height map much more smoothly, so both the surface profile and the silhouette become much more convincing. For the required comparison renders, the same non-default height texture should be used for both bump and displacement.
-        </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <h4>Bump mapping (Normal = 10, Height = 2)</h4>
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: bump mapping on cloth using a non-default height texture.
-                        </div>
-                        <figcaption>Required by the spec. Use the same height texture here and on the sphere renders below.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/bumpmap1.png" alt="Bump-mapped cloth render">
+                        <figcaption>Bump-mapped cloth render.</figcaption>
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: bump mapping on sphere using the same height texture.
-                        </div>
-                        <figcaption>Required by the spec. This should use the same texture as the cloth bump render.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/bumpmap2.png" alt="Bump-mapped sphere and cloth render">
+                        <figcaption>Bump-mapped sphere view using the same texture.</figcaption>
                     </td>
                 </tr>
+            </table>
+            <h4>Displacement mapping (Normal = 10, Height = 2)</h4>
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;" colspan="2">
-                        <div style="width: 820px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: displacement mapping on sphere using the same height texture.
-                        </div>
-                        <figcaption>Required by the spec. Use the same non-default height map as the bump renders.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/displace2.png" alt="Displacement-mapped cloth render">
+                        <figcaption>Displacement-mapped cloth-focused render.</figcaption>
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part5/displace1.png" alt="Displacement-mapped sphere and cloth render">
+                        <figcaption>Displacement render using the same texture.</figcaption>
                     </td>
                 </tr>
             </table>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: bump-mapped sphere at <code>-o 16 -a 16</code>.
-                        </div>
-                        <figcaption>Coarse sphere for bump mapping comparison.</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: bump-mapped sphere at <code>-o 128 -a 128</code>.
-                        </div>
-                        <figcaption>Fine sphere for bump mapping comparison.</figcaption>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: displacement-mapped sphere at <code>-o 16 -a 16</code>.
-                        </div>
-                        <figcaption>Coarse sphere for displacement comparison.</figcaption>
-                    </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: displacement-mapped sphere at <code>-o 128 -a 128</code>.
-                        </div>
-                        <figcaption>Fine sphere for displacement comparison.</figcaption>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <h3>Environment-mapped reflections</h3>
         <p>
-            The mirror shader uses the camera position and fragment position to compute the outgoing eye direction <code>w_o</code>, reflects that direction about the surface normal, and samples the cubemap with the reflected direction. This is a simple but effective approximation of a perfect mirror material because it replaces the explicit environment-light integration from the path tracer with a direct cubemap lookup. The effect is especially noticeable on the sphere, where the continuously changing normals cause the reflected environment to warp smoothly across the surface.
+            Both shaders, bump mapping and displacement mapping, use <code>u_texture_2</code> as a height map. 
+            We convert the sampled RGB value to a scalar height with a Rec.709-style luminance dot product. 
+            For bump mapping, we estimate the height gradient in texture space with:
+        </p>
+        <pre><code>dU = (h(u + 1 / w, v) - h(u, v)) * k_h * k_n
+dV = (h(u, v + 1 / h) - h(u, v)) * k_h * k_n</code></pre>
+        <p>
+            We use those finite differences to build the perturbed normal <code>(-dU, -dV, 1)</code> in tangent space and transform it with the TBN matrix. 
+            Bump mapping changes only the shading normals, while displacement mapping also moves each vertex along its original normal in <code>Displacement.vert</code>. 
+            That is why, as shown in the screenshots above, bump mapping preserves the original silhouette of the objects but displacement mapping doesn't.
+            If we were to use something closer to the default settings shown in the spec on the displacement map we would have a far less perturbed geometry.
+            We opted not to do that to make the vertex displacement more obvious.
+        </p>
+        <p>
+            To make the required comparisons easier on us, we added a <code>Height Map</code> dropdown to the Appearance panel. 
+            It, like our texture dropdown menu implementation, scans the <code>/textures</code> directory and reloads the selected file into <code>u_texture_2</code>. 
+            That way we can switch our bump/displacement map textures without having to finagle around the codebase.
         </p>
         <div style="display: flex; flex-direction: column; align-items: center;">
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+            <table class="screenshot-grid">
                 <tr>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: mirror shader on cloth.
-                        </div>
-                        <figcaption>Required by the spec.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/bumpy1.png" alt="Bump-mapped sphere at coarse resolution">
+                        <figcaption>Bump mapping at <code>-o 16 -a 16</code> with <code>Normal = 20</code>, <code>Height = 1</code>.</figcaption>
                     </td>
-                    <td style="text-align: center;">
-                        <div style="width: 400px; min-height: 220px; margin: 0 auto; padding: 16px; border: 1px dashed #777; display: flex; align-items: center; justify-content: center;">
-                            Screenshot placeholder: mirror shader on sphere.
-                        </div>
-                        <figcaption>Required by the spec.</figcaption>
+                    <td>
+                        <img class="screenshot-image" src="part5/bumpy2.png" alt="Bump-mapped sphere at fine resolution">
+                        <figcaption>Bump mapping at <code>-o 128 -a 128</code> with <code>Normal = 20</code>, <code>Height = 1</code>.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img class="screenshot-image" src="part5/disp1.png" alt="Displacement-mapped sphere at coarse resolution">
+                        <figcaption>Displacement mapping at <code>-o 16 -a 16</code> with <code>Normal = 20</code>, <code>Height = 1</code>.</figcaption>
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part5/disp2.png" alt="Displacement-mapped sphere at fine resolution">
+                        <figcaption>Displacement mapping at <code>-o 128 -a 128</code> with <code>Normal = 20</code>, <code>Height = 1</code>.</figcaption>
                     </td>
                 </tr>
             </table>
+            <p>
+                With <code>Normal = 20</code> and <code>Height = 1</code>, bump mapping changes far less compared to the displacement mappingas the sphere gets finer because it is perturbing only the shading normals; the coarse and fine renders mainly differ near the silhouette.
+                Even then, it is barely perceptible. 
+            </p>
+            <p>    
+                Displacement mapping reacts more dramatically to the same coarseness change because the geometry itself is being altered. 
+                At <code>-o 16 -a 16</code> the displaced relief looks more like a low-poly mesh while at <code>-o 128 -a 128</code> the same texture produces a much more detailed surface reflecting more of the detail on the underlying image.
+            </p>
         </div>
 
-        <h3>Custom shader</h3>
+        <h3>Environment Mapped Reflections</h3>
         <p>
-            We did not implement the optional custom shader for this homework, so there is no extra credit shader result to document here.
+        The spec doesn't ask for an explanation of this part but we will give one just in case.
+        The mirror shader computes the direction from the fragment to the camera, reflects that direction about the surface normal, and uses the reflected direction to sample the cubemap. 
+        That cubemap lookup provides the reflected environment color for the fragment. 
+        This doesn't work all that well for non curved surfaces, but when you have a curved surface it is reasonably convincing.
         </p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="screenshot-grid">
+                <tr>
+                    <td>
+                        <img class="screenshot-image" src="part5/mirror1.png" alt="Mirror shader on cloth">
+                        <figcaption>Mirror shader on cloth.</figcaption>
+                    </td>
+                    <td>
+                        <img class="screenshot-image" src="part5/mirror2.png" alt="Mirror shader on sphere">
+                        <figcaption>Mirror shader on sphere.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <h2>A.I. Acknowledgement</h2>
         <p>
